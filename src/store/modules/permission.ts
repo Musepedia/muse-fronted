@@ -38,7 +38,7 @@ export const usePermissionStore = defineStore("permission", () => {
 
   const setRoutes = (roles: string[]) => {
     let accessedRoutes
-    if (roles.includes("admin")) {
+    if (roles.includes("sys_admin")) {
       accessedRoutes = asyncRoutes
     } else {
       accessedRoutes = filterAsyncRoutes(asyncRoutes, roles)

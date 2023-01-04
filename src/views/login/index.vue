@@ -14,18 +14,20 @@ const loginFormRef = ref<FormInstance | null>(null)
 const loading = ref(false)
 /** 验证码图片 URL */
 const codeUrl = ref("")
+const uuid = ref("")
 /** 登录表单数据 */
 const loginForm: ILoginData = reactive({
-  username: "admin",
-  password: "12345678",
-  code: ""
+  username: "mgs_admin",
+  password: "MGS_ADMIN_1672813945576",
+  code: "",
+  uuid: ""
 })
 /** 登录表单校验规则 */
 const loginFormRules: FormRules = {
   username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
   password: [
     { required: true, message: "请输入密码", trigger: "blur" },
-    { min: 8, max: 16, message: "长度在 8 到 16 个字符", trigger: "blur" }
+    { min: 8, max: 32, message: "长度在 8 到 16 个字符", trigger: "blur" }
   ],
   code: [{ required: true, message: "请输入验证码", trigger: "blur" }]
 }
@@ -34,11 +36,13 @@ const handleLogin = () => {
   loginFormRef.value?.validate((valid: boolean) => {
     if (valid) {
       loading.value = true
+      //console.log(loginForm.code)
       useUserStore()
         .login({
           username: loginForm.username,
           password: loginForm.password,
-          code: loginForm.code
+          code: loginForm.code,
+          uuid: loginForm.uuid
         })
         .then(() => {
           router.push({ path: "/" })
@@ -62,7 +66,10 @@ const createCode = () => {
   // 获取验证码
   codeUrl.value = ""
   getLoginCodeApi().then((res: any) => {
-    codeUrl.value = res.data
+    codeUrl.value = res.data.data.entity
+    uuid.value = res.data.data.uuid
+    loginForm.uuid = uuid.value
+    //console.log(loginForm.uuid)
   })
 }
 
@@ -123,16 +130,14 @@ createCode()
             </el-input>
           </el-form-item>
           <div style="display: flex; flex-direction: row; justify-content: space-around">
-            <el-button :loading="loading" color="#e6a23c" size="large" plain @click.prevent="handleLogin">
-              注册
-            </el-button>
+            <el-button :loading="loading" color="#e6a23c" size="large" plain @click="handleLogin"> 注册 </el-button>
             <el-button
               :loading="loading"
               color="#e6a23c"
               style="color: #fff"
-              type="primiary"
+              type="primary"
               size="large"
-              @click.prevent="handleLogin"
+              @click="handleLogin"
             >
               登 录
             </el-button>

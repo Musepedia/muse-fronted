@@ -9,7 +9,7 @@ export const checkPermission = (value: string[]): boolean => {
       return permissionRoles.includes(role)
     })
   } else {
-    console.error("need roles! Like v-permission=\"['admin','editor']\"")
+    console.error("need roles! Like v-permission=\"['sys_admin','museum_admin']\"")
     return false
   }
 }

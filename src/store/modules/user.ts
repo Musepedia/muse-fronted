@@ -10,7 +10,12 @@ import { type RouteRecordRaw } from "vue-router"
 export const useUserStore = defineStore("user", () => {
   const token = ref<string>(getToken() || "")
   const roles = ref<string[]>([])
+  const roleDescript = ref<string>("")
   const username = ref<string>("")
+  const nickname = ref<string>("")
+  const email = ref<string>("")
+  const phone = ref<string>("")
+  const museumID = ref<number>()
 
   /** 设置角色数组 */
   const setRoles = (value: string[]) => {
@@ -22,15 +27,19 @@ export const useUserStore = defineStore("user", () => {
       loginApi({
         username: loginData.username,
         password: loginData.password,
-        code: loginData.code
+        code: loginData.code,
+        uuid: loginData.uuid
       })
         .then((res: any) => {
-          setToken(res.data.token)
-          token.value = res.data.token
+          setToken(res.headers["x-auth-token"])
+          token.value = res.headers["x-auth-token"]
+          //console.log(roles)
+          username.value = res.data.data.username
           resolve(true)
         })
         .catch((error) => {
-          reject(error)
+          reject(error.message)
+          console.log(error)
         })
     })
   }
@@ -39,8 +48,14 @@ export const useUserStore = defineStore("user", () => {
     return new Promise((resolve, reject) => {
       getUserInfoApi()
         .then((res: any) => {
-          roles.value = res.data.roles
-          username.value = res.data.username
+          roles.value[0] = res.data.data.roles[0].name
+          roleDescript.value = res.data.data.roles[0].description
+          //console.log(res)
+          username.value = res.data.data.username
+          nickname.value = res.data.data.nickname
+          email.value = res.data.data.email
+          phone.value = res.data.data.phone
+          museumID.value = res.data.data.institutionId
           resolve(res)
         })
         .catch((error) => {
@@ -55,6 +70,7 @@ export const useUserStore = defineStore("user", () => {
     setToken(newToken)
     await getInfo()
     const permissionStore = usePermissionStore()
+    console.log(roles.value)
     permissionStore.setRoutes(roles.value)
     resetRouter()
     permissionStore.dynamicRoutes.forEach((item: RouteRecordRaw) => {
@@ -75,7 +91,22 @@ export const useUserStore = defineStore("user", () => {
     roles.value = []
   }
 
-  return { token, roles, username, setRoles, login, getInfo, changeRoles, logout, resetToken }
+  return {
+    token,
+    roles,
+    roleDescript,
+    email,
+    phone,
+    museumID,
+    username,
+    nickname,
+    setRoles,
+    login,
+    getInfo,
+    changeRoles,
+    logout,
+    resetToken
+  }
 })
 
 /** 在 setup 外使用 */

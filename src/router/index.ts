@@ -57,21 +57,6 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
-    path: "/link",
-    component: Layout,
-    children: [
-      {
-        path: "https://pt.musepedia.cn",
-        component: () => {},
-        name: "Link",
-        meta: {
-          title: "官网",
-          svgIcon: "link"
-        }
-      }
-    ]
-  },
-  {
     path: "/menu",
     component: Layout,
     redirect: "/menu/menu1",
@@ -108,29 +93,16 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
-    path: "/table",
+    path: "/link",
     component: Layout,
-    redirect: "/table/element-plus",
-    name: "Table",
-    meta: {
-      title: "表格",
-      elIcon: "Grid"
-    },
     children: [
       {
-        path: "element-plus",
-        component: () => import("@/views/table/element-plus/index.vue"),
-        name: "ElementPlus",
+        path: "https://pt.musepedia.cn",
+        component: () => {},
+        name: "Link",
         meta: {
-          title: "Element Plus"
-        }
-      },
-      {
-        path: "vxe-table",
-        component: () => import("@/views/table/vxe-table/index.vue"),
-        name: "VxeTable",
-        meta: {
-          title: "Vxe Table"
+          title: "官网",
+          svgIcon: "link"
         }
       }
     ]
@@ -146,22 +118,30 @@ export const asyncRoutes: RouteRecordRaw[] = [
   {
     path: "/permission",
     component: Layout,
-    redirect: "/permission/page",
+    redirect: "/permission/userControl",
     name: "Permission",
     meta: {
-      title: "权限管理",
+      title: "多任务管理",
       svgIcon: "lock",
-      roles: ["admin", "editor"], // 可以在根路由中设置角色
+      roles: ["sys_admin"], // 可以在根路由中设置角色
       alwaysShow: true // 将始终显示根菜单
     },
     children: [
+      // {
+      //   path: "page",
+      //   component: () => import("@/views/permission/page.vue"),
+      //   name: "PagePermission",
+      //   meta: {
+      //     title: "页面权限",
+      //     roles: ["sys_admin"] // 或者在子导航中设置角色
+      //   }
+      // },
       {
-        path: "page",
-        component: () => import("@/views/permission/page.vue"),
-        name: "PagePermission",
+        path: "userControl",
+        component: () => import("@/views/permission/element-plus/index.vue"),
+        name: "UserControl",
         meta: {
-          title: "页面权限",
-          roles: ["admin"] // 或者在子导航中设置角色
+          title: "用户管理"
         }
       },
       {
@@ -169,7 +149,7 @@ export const asyncRoutes: RouteRecordRaw[] = [
         component: () => import("@/views/permission/directive.vue"),
         name: "DirectivePermission",
         meta: {
-          title: "指令权限" // 如果未设置角色，则表示：该页面不需要权限，但会继承根路由的角色
+          title: "博物馆管理" // 如果未设置角色，则表示：该页面不需要权限，但会继承根路由的角色
         }
       }
     ]

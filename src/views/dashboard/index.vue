@@ -5,15 +5,15 @@ import AdminDashboard from "./admin/index.vue"
 import EditorDashboard from "./editor/index.vue"
 //import { ElNotification } from "element-plus"
 
-type CurrentRoleType = "admin" | "editor"
+type CurrentRoleType = "sys_admin" | "museum_admin"
 
 const userStore = useUserStore()
-const currentRole = ref<CurrentRoleType>("admin")
-if (!userStore.roles.includes("admin")) {
-  currentRole.value = "editor"
+const currentRole = ref<CurrentRoleType>("sys_admin")
+if (!userStore.roles.includes("sys_admin")) {
+  currentRole.value = "museum_admin"
 }
 </script>
 
 <template>
-  <component :is="currentRole === 'admin' ? AdminDashboard : EditorDashboard" />
+  <component :is="currentRole === 'sys_admin' ? AdminDashboard : EditorDashboard" />
 </template>
