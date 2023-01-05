@@ -24,6 +24,13 @@ export interface UpdateUserData {
   phone: string
 }
 
+export interface setpwdData {
+  /** 旧密码 */
+  oldPassword: string
+  /** 新密码 */
+  newPassword: string
+}
+
 /** 根据ID获取博物馆信息 */
 export function getMuseInfo(id: number) {
   return request({
@@ -32,10 +39,20 @@ export function getMuseInfo(id: number) {
   })
 }
 
+/** 修改用户个人信息 */
 export function updateUserInfo(data: UpdateUserData) {
   return request({
     url: "user/info",
     method: "put",
+    data
+  })
+}
+
+/** 修改密码 */
+export function setUserpwd(data: setpwdData) {
+  return request({
+    url: "user/reset-password",
+    method: "post",
     data
   })
 }

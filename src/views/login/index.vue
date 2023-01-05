@@ -18,7 +18,7 @@ const uuid = ref("")
 /** 登录表单数据 */
 const loginForm: ILoginData = reactive({
   username: "mgs_admin",
-  password: "MGS_ADMIN_1672813945576",
+  password: "",
   code: "",
   uuid: ""
 })

@@ -118,6 +118,7 @@ createInfo()
     </el-descriptions>
   </div>
 
+  <!-- 修改个人信息组件 -->
   <el-dialog title="修改个人信息" v-model="setUserFormVisible" :close-on-click-modal="false">
     <el-form :model="UserForm" label-width="80px" :rules="UserFormRules" ref="UserFormRef">
       <el-row>
