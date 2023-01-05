@@ -138,16 +138,16 @@ export const asyncRoutes: RouteRecordRaw[] = [
       // },
       {
         path: "userControl",
-        component: () => import("@/views/permission/element-plus/index.vue"),
+        component: () => import("@/views/permission/userTable.vue"),
         name: "UserControl",
         meta: {
           title: "用户管理"
         }
       },
       {
-        path: "directive",
-        component: () => import("@/views/permission/directive.vue"),
-        name: "DirectivePermission",
+        path: "museumControl",
+        component: () => import("@/views/permission/museumTable.vue"),
+        name: "MuseumControl",
         meta: {
           title: "博物馆管理" // 如果未设置角色，则表示：该页面不需要权限，但会继承根路由的角色
         }

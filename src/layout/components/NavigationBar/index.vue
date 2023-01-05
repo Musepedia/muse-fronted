@@ -67,7 +67,6 @@ const handlepwdEdit = () => {
   setpwdFormRef.value?.validate((valid: boolean) => {
     if (valid) {
       editLoading.value = true
-      console.log(setpwdForm.newpassword)
       setUserpwd({
         oldPassword: setpwdForm.oldpassword,
         newPassword: setpwdForm.newpassword
