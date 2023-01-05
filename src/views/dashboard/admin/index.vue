@@ -116,43 +116,43 @@ createInfo()
       <el-descriptions-item label="电话">{{ userStore.phone }}</el-descriptions-item>
       <el-descriptions-item label="博物馆">{{ UserForm.museum }}</el-descriptions-item>
     </el-descriptions>
-  </div>
 
-  <el-dialog title="修改个人信息" v-model="setUserFormVisible" :close-on-click-modal="false" center>
-    <el-form :model="UserForm" label-width="80px" :rules="UserFormRules" ref="UserFormRef">
-      <el-row type="flex" justify="center" align="middle">
-        <el-form-item label="昵称" prop="nickname">
-          <el-input v-model="UserForm.nickname" />
-        </el-form-item>
-      </el-row>
-      <el-row type="flex" justify="center" align="middle">
-        <el-form-item label="邮箱" prop="email">
-          <el-autocomplete
-            class="inline-input"
-            v-model="UserForm.email"
-            :fetch-suggestions="oldEmail"
-            @select="handleSelect1"
-          />
-          <!-- <el-input v-model="UserForm.email" auto-complete="off" /> -->
-        </el-form-item>
-      </el-row>
-      <el-row type="flex" justify="center" align="middle">
-        <el-form-item label="电话" prop="phone">
-          <el-autocomplete
-            class="inline-input"
-            v-model="UserForm.phone"
-            :fetch-suggestions="oldPhone"
-            @select="handleSelect2"
-          />
-          <!-- <el-input v-model="UserForm.phone" auto-complete="off" /> -->
-        </el-form-item>
-      </el-row>
-      <el-row type="flex" justify="center" align="middle">
-        <el-button @click="setUserFormVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleUserEdit" :loading="editLoading">提交修改</el-button>
-      </el-row>
-    </el-form>
-  </el-dialog>
+    <el-dialog title="修改个人信息" v-model="setUserFormVisible" :close-on-click-modal="false" center>
+      <el-form :model="UserForm" label-width="80px" :rules="UserFormRules" ref="UserFormRef">
+        <el-row type="flex" justify="center" align="middle">
+          <el-form-item label="昵称" prop="nickname">
+            <el-input v-model="UserForm.nickname" />
+          </el-form-item>
+        </el-row>
+        <el-row type="flex" justify="center" align="middle">
+          <el-form-item label="邮箱" prop="email">
+            <el-autocomplete
+              class="inline-input"
+              v-model="UserForm.email"
+              :fetch-suggestions="oldEmail"
+              @select="handleSelect1"
+            />
+            <!-- <el-input v-model="UserForm.email" auto-complete="off" /> -->
+          </el-form-item>
+        </el-row>
+        <el-row type="flex" justify="center" align="middle">
+          <el-form-item label="电话" prop="phone">
+            <el-autocomplete
+              class="inline-input"
+              v-model="UserForm.phone"
+              :fetch-suggestions="oldPhone"
+              @select="handleSelect2"
+            />
+            <!-- <el-input v-model="UserForm.phone" auto-complete="off" /> -->
+          </el-form-item>
+        </el-row>
+        <el-row type="flex" justify="center" align="middle">
+          <el-button @click="setUserFormVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleUserEdit" :loading="editLoading">提交修改</el-button>
+        </el-row>
+      </el-form>
+    </el-dialog>
+  </div>
 </template>
 
 <style lang="scss" scoped>

@@ -13,12 +13,13 @@ interface IUpdateTableDataApi {
 
 interface IGetTableDataApi {
   /** 当前页码 */
-  currentPage: number
+  current: number
   /** 查询条数 */
   size: number
   /** 查询参数 */
-  username?: string
-  phone?: string
+  nickname?: string
+  createTime?: string[]
+  updateTime?: string[]
 }
 
 /** 增 */
@@ -48,9 +49,9 @@ export function updateTableDataApi(data: IUpdateTableDataApi) {
 }
 
 /** 查 */
-export function getTableDataApi(params: IGetTableDataApi) {
+export function getUserList(params: IGetTableDataApi) {
   return request({
-    url: "table",
+    url: "admin/user/list",
     method: "get",
     params
   })
