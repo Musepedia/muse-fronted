@@ -1,6 +1,6 @@
 <div align="center">
-  <img alt="V3 Admin Vite Logo" width="120" height="120" src="./src/assets/layout/logo.png">
-  <h1>V3 Admin Vite</h1>
+  <img alt="MGS Logo" width="120" height="120" src="./src/assets/layout/logo.png">
+  <h1>MGS_Fronted</h1>
   <span>English | <a href="./README.zh-CN.md">中文</a></span>
 </div>
 
@@ -40,17 +40,11 @@
 3. node version 16+
 4. pnpm version 7.x
 
-# clone
-git clone https://github.com/un-pany/v3-admin-vite.git
-
-# enter the project directory
-cd v3-admin-vite
-
 # install dependencies
-pnpm i
+pnpm i 或 npm install
 
 # start the service
-pnpm dev
+pnpm dev 或 npm run dev
 ```
 
 ##  Preview
