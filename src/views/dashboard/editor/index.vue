@@ -4,7 +4,8 @@ import { useRouter } from "vue-router"
 import { useUserStore } from "@/store/modules/user"
 import { useUserStoreHook } from "@/store/modules/user"
 import { type FormInstance, FormRules } from "element-plus"
-import { type UserData, type UpdateUserData, getMuseInfo, updateUserInfo } from "@/api/userInfo"
+import { type UserData, type UpdateUserData, updateUserInfo } from "@/api/userInfo"
+import { getMuseInfoById } from "@/api/adminMuseum"
 
 const userStore = useUserStoreHook()
 const UserFormRef = ref<FormInstance | null>(null)
@@ -46,7 +47,7 @@ const createInfo = () => {
   if (id === null) {
     UserForm.museum = "暂无"
   } else {
-    getMuseInfo(userStore.museumID as number).then((res: any) => {
+    getMuseInfoById(userStore.museumID as number).then((res: any) => {
       UserForm.museum = res.data.data.name
     })
   }

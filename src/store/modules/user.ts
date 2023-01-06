@@ -16,6 +16,7 @@ export const useUserStore = defineStore("user", () => {
   const email = ref<string>("")
   const phone = ref<string>("")
   const museumID = ref<number>()
+  const enabled = ref(true)
 
   /** 设置角色数组 */
   const setRoles = (value: string[]) => {
@@ -35,6 +36,7 @@ export const useUserStore = defineStore("user", () => {
           token.value = res.headers["x-auth-token"]
           //console.log(roles)
           username.value = res.data.data.username
+          enabled.value = res.data.data.enabled
           resolve(true)
         })
         .catch((error) => {
@@ -56,6 +58,7 @@ export const useUserStore = defineStore("user", () => {
           email.value = res.data.data.email
           phone.value = res.data.data.phone
           museumID.value = res.data.data.institutionId
+          enabled.value = res.data.data.enabled
           resolve(res)
         })
         .catch((error) => {
@@ -100,6 +103,7 @@ export const useUserStore = defineStore("user", () => {
     museumID,
     username,
     nickname,
+    enabled,
     setRoles,
     login,
     getInfo,

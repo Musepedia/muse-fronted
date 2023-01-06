@@ -31,14 +31,6 @@ export interface setpwdData {
   newPassword: string
 }
 
-/** 根据ID获取博物馆信息 */
-export function getMuseInfo(id: number) {
-  return request({
-    url: `museum/${id}`,
-    method: "get"
-  })
-}
-
 /** 修改用户个人信息 */
 export function updateUserInfo(data: UpdateUserData) {
   return request({

@@ -2,13 +2,13 @@
 import { reactive, ref, watch } from "vue"
 import {
   addUserApi,
-  deleteTableDataApi,
+  changeStatesApi,
   updateUserApi,
   resetUserPwdApi,
   getUserListApi,
   getRoleListApi
 } from "@/api/adminUser"
-import { getMuseumListApi } from "@/api/adminMuseum"
+import { getMuseumListApi, getMuseInfoById } from "@/api/adminMuseum"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
@@ -89,15 +89,46 @@ const resetForm = () => {
 }
 //#endregion
 
-//#region 删
-const handleDelete = (row: any) => {
-  ElMessageBox.confirm(`正在删除用户：${row.username}，确认删除？`, "提示", {
+//#region 删--启用/禁用
+// const handleDelete = (row: any) => {
+//   ElMessageBox.confirm(`正在删除用户：${row.username}，确认删除？`, "提示", {
+//     confirmButtonText: "确定",
+//     cancelButtonText: "取消",
+//     type: "warning"
+//   }).then(() => {
+//     deleteTableDataApi(row.id).then(() => {
+//       ElMessage.success("删除成功")
+//       getUserList()
+//     })
+//   })
+// }
+const currentStates = ref<string>("")
+const targetStates = ref<string>("")
+const handleChange = (row: any) => {
+  currentStates.value = row.enabled === true ? "启用" : "禁用"
+  targetStates.value = row.enabled === false ? "启用" : "禁用"
+  const data = [
+    `当前用户: ${row.username}`,
+    `当前状态为: ${currentStates.value}`,
+    `切换状态为: ${targetStates.value}`,
+    "确认切换？"
+  ]
+  let str = ""
+  data.forEach((item) => {
+    str += `${item}<br/>`
+  })
+  ElMessageBox.confirm(str, "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
-    type: "warning"
+    dangerouslyUseHTMLString: true,
+    type: "warning",
+    center: true
   }).then(() => {
-    deleteTableDataApi(row.id).then(() => {
-      ElMessage.success("删除成功")
+    changeStatesApi({
+      enable: !row.enabled,
+      userId: row.id
+    }).then(() => {
+      ElMessage.success("状态切换成功")
       getUserList()
     })
   })
@@ -116,6 +147,8 @@ const handleUpdate = (row: any) => {
   formData.institution = row.institution
   // formData.password = row.password
   dialogVisible.value = true
+  getRoleList()
+  getMuseumList()
 }
 /** 重置密码 */
 const editLoading = ref(false)
@@ -195,10 +228,21 @@ const getRoleList = () => {
       loading.value = false
     })
 }
+/** formatter 角色数组的逐个呈现 */
 const rolesData = (row: any) => {
   const arr: any[] = []
   row.roles.forEach((item: any, index: any) => {
     arr.push(item.name)
+    if (index > 2) {
+      return
+    }
+  })
+  return arr.join(",")
+}
+const rolesData2 = (row: any) => {
+  const arr: any[] = []
+  row.roles.forEach((item: any, index: any) => {
+    arr.push(item.createTime)
     if (index > 2) {
       return
     }
@@ -227,6 +271,14 @@ const getMuseumList = () => {
       loading.value = false
     })
 }
+/** 根据Id获取博物馆信息 */
+const getMuseumName = (row: any) => {
+  getMuseInfoById(row.institutionId).then((res: any) => {
+    row.institution = res.data.data.name
+  })
+  // console.log(row.institution)
+  return row.institution
+}
 
 const searchFormRef = ref<FormInstance | null>(null)
 const searchData = reactive({
@@ -248,6 +300,7 @@ const getUserList = () => {
     .then((res: any) => {
       paginationData.total = res.data.data.total
       userList.value = res.data.data.data
+      // console.log(userList.value)
     })
     .catch(() => {
       userList.value = []
@@ -301,7 +354,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getUser
       <div class="toolbar-wrapper">
         <div>
           <el-button type="primary" :icon="CirclePlus" @click="handleOpenAdd">新增用户</el-button>
-          <el-button type="danger" :icon="Delete">批量删除</el-button>
+          <!-- <el-button type="danger" :icon="Delete">批量删除</el-button> -->
         </div>
         <div>
           <el-tooltip content="下载">
@@ -324,20 +377,29 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getUser
               <el-tag v-else type="warning" effect="plain">{{ scope.row.roles.name }}</el-tag>
             </template> -->
           </el-table-column>
+          <el-table-column prop="institutionId" label="博物馆" align="center">
+            <template #default="scope">
+              <el-tag v-if="scope.row.institutionId === null" type="danger" effect="plain">暂无</el-tag>
+              <!-- <el-tag v-else type="success" effect="plain" @click="getMuseumName(scope.row)">{{
+                scope.row.institution === undefined ? "查看" : scope.row.institution
+              }}</el-tag> -->
+              <el-tag v-else type="success" effect="plain">{{ getMuseumName(scope.row) }}</el-tag>
+            </template>
+          </el-table-column>
           <el-table-column prop="phone" label="手机号" align="center" />
           <el-table-column prop="email" label="邮箱" align="center" />
-          <el-table-column prop="enable" label="状态" align="center">
+          <el-table-column prop="enabled" label="状态" align="center">
             <template #default="scope">
-              <el-tag v-if="scope.row.enable" type="success" effect="plain">启用</el-tag>
+              <el-tag v-if="scope.row.enabled" type="success" effect="plain">启用</el-tag>
               <el-tag v-else type="danger" effect="plain">禁用</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="roles.createTime" label="创建时间" align="center" />
+          <el-table-column key="roles" prop="roles" label="创建时间" align="center" :formatter="rolesData2" />
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
               <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
               <el-button type="primary" text bg size="small" @click="openReset(scope.row)">重置密码</el-button>
-              <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">切换状态</el-button>
+              <el-button type="danger" text bg size="small" @click="handleChange(scope.row)">切换状态</el-button>
             </template>
           </el-table-column>
         </el-table>

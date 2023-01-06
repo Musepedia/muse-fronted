@@ -15,3 +15,11 @@ export function getMuseumListApi(params: IGetMuseumListApi) {
     params
   })
 }
+
+/** 根据ID获取博物馆信息 */
+export function getMuseInfoById(id: number) {
+  return request({
+    url: `museum/${id}`,
+    method: "get"
+  })
+}

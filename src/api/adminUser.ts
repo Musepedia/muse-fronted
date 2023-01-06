@@ -36,6 +36,11 @@ interface IGetUserListApi {
   updateTime?: string[]
 }
 
+interface IChangeStatesApi {
+  enable: boolean
+  userId: number
+}
+
 /** 增 */
 export function addUserApi(data: IAddUserApi) {
   return request({
@@ -45,11 +50,18 @@ export function addUserApi(data: IAddUserApi) {
   })
 }
 
-/** 删 */
-export function deleteTableDataApi(id: string) {
+/** 删--启用/禁用 */
+// export function deleteTableDataApi(id: string) {
+//   return request({
+//     url: `table/${id}`,
+//     method: "delete"
+//   })
+// }
+export function changeStatesApi(data: IChangeStatesApi) {
   return request({
-    url: `table/${id}`,
-    method: "delete"
+    url: "admin/user/enable",
+    method: "put",
+    data
   })
 }
 

@@ -16,7 +16,11 @@ router.beforeEach(async (to, _from, next) => {
   const permissionStore = usePermissionStoreHook()
   // 判断该用户是否登录
   if (getToken()) {
-    if (to.path === "/login") {
+    if (userStore.enabled === false) {
+      ElMessage.error("该用户已禁用，请向系统管理员申请权限")
+      next("/login")
+      NProgress.done()
+    } else if (to.path === "/login") {
       // 如果已经登录，并准备进入 Login 页面，则重定向到主页
       next({ path: "/" })
       NProgress.done()
