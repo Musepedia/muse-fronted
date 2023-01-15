@@ -126,7 +126,7 @@ const handleChange = (row: any) => {
   }).then(() => {
     changeStatesApi({
       enable: !row.enabled,
-      userId: row.id
+      id: row.id
     }).then(() => {
       ElMessage.success("状态切换成功")
       getUserList()
@@ -283,6 +283,7 @@ const getMuseumName = (row: any) => {
 const searchFormRef = ref<FormInstance | null>(null)
 const searchData = reactive({
   nickname: "",
+  order: "",
   createTime: [],
   updateTime: []
 })
@@ -295,7 +296,8 @@ const getUserList = () => {
     size: paginationData.pageSize,
     nickname: searchData.nickname || undefined,
     createTime: searchData.createTime || undefined,
-    updateTime: searchData.updateTime || undefined
+    updateTime: searchData.updateTime || undefined,
+    order: searchData.order || undefined
   })
     .then((res: any) => {
       paginationData.total = res.data.data.total
@@ -368,7 +370,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getUser
       <div class="table-wrapper">
         <el-table :data="userList">
           <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="id" label="id" align="center" />
+          <el-table-column prop="id" label="id" align="center" sortable />
           <el-table-column prop="username" label="用户名" align="center" />
           <el-table-column prop="nickname" label="昵称" align="center" />
           <el-table-column key="roles" prop="roles" label="身份" align="center" :formatter="rolesData">
@@ -388,13 +390,13 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getUser
           </el-table-column>
           <el-table-column prop="phone" label="手机号" align="center" />
           <el-table-column prop="email" label="邮箱" align="center" />
-          <el-table-column prop="enabled" label="状态" align="center">
+          <el-table-column prop="enabled" label="状态" align="center" sortable>
             <template #default="scope">
               <el-tag v-if="scope.row.enabled" type="success" effect="plain">启用</el-tag>
               <el-tag v-else type="danger" effect="plain">禁用</el-tag>
             </template>
           </el-table-column>
-          <el-table-column key="roles" prop="roles" label="创建时间" align="center" :formatter="rolesData2" />
+          <el-table-column key="roles" prop="roles" label="创建时间" align="center" :formatter="rolesData2" sortable />
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
               <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>

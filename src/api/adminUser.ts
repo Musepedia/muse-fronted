@@ -34,11 +34,12 @@ interface IGetUserListApi {
   nickname?: string
   createTime?: string[]
   updateTime?: string[]
+  order?: string
 }
 
 interface IChangeStatesApi {
   enable: boolean
-  userId: number
+  id: number
 }
 
 /** 增 */
