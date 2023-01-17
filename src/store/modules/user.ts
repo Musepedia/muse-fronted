@@ -41,7 +41,7 @@ export const useUserStore = defineStore("user", () => {
         })
         .catch((error) => {
           reject(error.message)
-          console.log(error)
+          // console.log(error)
         })
     })
   }
@@ -73,7 +73,7 @@ export const useUserStore = defineStore("user", () => {
     setToken(newToken)
     await getInfo()
     const permissionStore = usePermissionStore()
-    console.log(roles.value)
+    // console.log(roles.value)
     permissionStore.setRoutes(roles.value)
     resetRouter()
     permissionStore.dynamicRoutes.forEach((item: RouteRecordRaw) => {

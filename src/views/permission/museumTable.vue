@@ -11,7 +11,97 @@ import {
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
-import { NONAME } from "dns"
+import loadBMap from "@/utils/loadMap"
+
+/** 地图组件相关 */
+const mapInit = loadBMap("FqQiSXzNuKB43VWUvMSuPBDbIYNfu5bN")
+
+const longitude = ref("--")
+const latitude = ref("--")
+const address = ref("--")
+const mapDialogVisible = ref(false)
+const handleMapOpen = () => {
+  mapDialogVisible.value = true
+}
+
+mapInit.then((BMap: any) => {
+  console.log(BMap)
+  const map = new BMap.Map("map")
+  map.centerAndZoom(new BMap.Point(121.4, 31.25), 8) //初始化地图，设置城市和地图级别
+  map.enableScrollWheelZoom(true)
+
+  const ac = new BMap.Autocomplete({ input: "suggestId", location: map })
+  ac.addEventListener("onconfirm", function (e: any) {
+    //鼠标点击下拉列表后的事件
+    const tempValue = e.item.value
+    const searchValue = tempValue.province + tempValue.city + tempValue.district + tempValue.street + tempValue.business
+    setPlace(BMap, map, searchValue)
+  })
+})
+
+/**
+ * 根据输入框的值在地图上添加标记点
+ * @param
+ *   BMap：地图对象
+ *   searchValue：输入框下拉数据选中的值
+ * **/
+function setPlace(BMap: any, map: any, searchValue: any) {
+  map.clearOverlays() //清除地图上所有覆盖物
+  const local = new BMap.LocalSearch(map, {
+    //智能搜索
+    onSearchComplete: (res: any) => {
+      const pp = local.getResults().getPoi(0).point //获取第一个智能搜索的结果
+      map.centerAndZoom(pp, 21)
+      map.addOverlay(new BMap.Marker(pp)) //添加标注
+      movePoint(BMap, map, res.Ir[0].point)
+    }
+  })
+  local.search(searchValue)
+}
+
+/**
+ * 移动标记点
+ * @param
+ *   BMap：地图对象
+ *   latlng：经纬度
+ * **/
+function movePoint(BMap: any, map: any, latlng: any) {
+  map.clearOverlays() //清除地图上所有覆盖物
+  //使用BMap命名空间下的Point类来创建一个坐标点
+  const point = new BMap.Point(latlng.lng, latlng.lat)
+  const marker = new BMap.Marker(point, {
+    enableDragging: true
+  })
+  map.addOverlay(marker)
+  latlngToAddress(BMap, latlng)
+
+  // 覆盖物拖拽开始事件
+  marker.addEventListener("dragstart", function (e: any) {
+    // 清除一些覆盖物
+    console.log("[开始]", e)
+  })
+  // 覆盖物拖拽事件
+  marker.addEventListener("dragend", function () {
+    const nowPoint = marker.getPosition() // 拖拽完成之后坐标的位置(经纬度)
+    latlngToAddress(BMap, nowPoint)
+  })
+}
+
+/**
+ * 地址解析
+ * @param
+ *   BMap：地图对象
+ *   latlng：经纬度
+ * **/
+function latlngToAddress(BMap: any, latlng: any) {
+  const geoc = new BMap.Geocoder()
+  geoc.getLocation(latlng, function (rs: any) {
+    console.log(rs.surroundingPois[0])
+    address.value = rs.surroundingPois[0].address + rs.surroundingPois[0].title
+    latitude.value = rs.surroundingPois[0].point.lat
+    longitude.value = rs.surroundingPois[0].point.lng
+  })
+}
 
 const loading = ref<boolean>(false)
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
@@ -501,6 +591,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getMuse
         </el-form-item>
         <el-form-item prop="address" label="博物馆地址">
           <el-input v-model="formData.address" placeholder="请输入博物馆地址" />
+          <el-icon @click="handleMapOpen"><Edit /></el-icon>
         </el-form-item>
         <el-form-item prop="description" label="博物馆描述">
           <el-input type="textarea" v-model="formData.description" placeholder="请输入博物馆描述" />
@@ -557,6 +648,15 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getMuse
         <el-button type="primary" @click="handleCreate">确认</el-button>
       </template>
     </el-dialog>
+
+    <!-- 地图组件 -->
+    <el-dialog v-model="mapDialogVisible" @close="mapDialogVisible = false">
+      <div id="map" />
+      <div id="r-result">
+        <span>请输入地址: </span>
+        <input type="text" id="suggestId" size="20" value="" />
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -587,16 +687,19 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getMuse
   background-color: rgb(246, 249, 251);
 }
 
-.clearfix:before,
-:deep(.clearfix:after) {
+// .clearfix:before,
+.clearfix {
   //display: inline-block;
-  display: block;
-  align-content: center;
-  content: "";
+  //text-align: center;
+  border-right: solid 1px var(--el-border-color);
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+  vertical-align: top;
 }
-.clearfix:after {
-  clear: both;
-}
+// .clearfix:after {
+//   clear: both;
+// }
 
 .item {
   margin-bottom: 18px;
@@ -652,5 +755,16 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getMuse
   height: 178px;
   line-height: 178px;
   text-align: center;
+}
+
+#map {
+  border: 1px solid red;
+  width: 100%;
+  height: 600px;
+}
+#suggestId {
+  border: 1px solid red;
+  width: 300px;
+  height: 30px;
 }
 </style>
