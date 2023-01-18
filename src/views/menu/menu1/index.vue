@@ -34,6 +34,14 @@ const createData = () => {
   }
 }
 
+/** 系统管理员可以再次重新选择博物馆 */
+const handleChoseMuseumAgain = () => {
+  loading.value = true
+  choseMuseumDialogVisible.value = true
+  getMuseumList()
+  loading.value = false
+}
+
 /** 获取博物馆列表 */
 const museumList = ref<any[]>([])
 const museumChosen = ref<number>()
@@ -58,7 +66,7 @@ const getMuseumList = () => {
 }
 
 const handleChoseMuseumClose = () => {
-  if (userStore.museumID === null && museumChosen.value === null) {
+  if (userStore.museumID === null && museumChosen.value === undefined) {
     ElMessage.warning("请先选择一个博物馆")
   } else {
     choseMuseumDialogVisible.value = false
@@ -200,7 +208,11 @@ const zoneFormRules: FormRules = reactive({
   description: [{ required: true, trigger: "blur", message: "请输入展区描述" }]
 })
 const handleOpenAddZone = () => {
-  dialogVisible.value = true
+  if (userStore.museumID === null && museumChosen.value === undefined) {
+    ElMessage.warning("请先选择一个博物馆")
+  } else {
+    dialogVisible.value = true
+  }
 }
 
 const handleCreate = () => {
@@ -255,7 +267,7 @@ const handleChange = (item: any) => {
   const data = [
     `当前展区: ${item.name}`,
     `当前状态为: ${currentStates.value}`,
-    `切换状态:为 ${targetStates.value}`,
+    `切换状态为: ${targetStates.value}`,
     "确认切换？"
   ]
   let str = ""
@@ -321,7 +333,7 @@ createData()
         type="info"
         plain
         style="margin-right: 5px"
-        @click="choseMuseumDialogVisible = true"
+        @click="handleChoseMuseumAgain"
         >选择博物馆</el-button
       >
       <el-button type="info" plain style="margin-right: 8%" @click="handleEditZonePosition">编辑展区位置</el-button>
@@ -413,9 +425,7 @@ createData()
       </div>
       <el-descriptions style="margin-top: 20px" :column="1" border>
         <el-descriptions-item label="展区描述: ">{{ descriptionDetail }}</el-descriptions-item>
-        <el-descriptions-item label="启用状态: ">{{
-          enabledDetail === true ? "启用中" : "已关闭"
-        }}</el-descriptions-item>
+        <el-descriptions-item label="状态: ">{{ enabledDetail === true ? "启用中" : "已关闭" }}</el-descriptions-item>
       </el-descriptions>
     </el-dialog>
   </div>

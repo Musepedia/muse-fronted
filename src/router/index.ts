@@ -93,6 +93,16 @@ export const constantRoutes: RouteRecordRaw[] = [
         }
       },
       {
+        path: "exhibitPosition",
+        component: () => import("@/views/menu/menu2/exhibitPosition.vue"),
+        name: "exhibitPosition",
+        meta: {
+          title: "编辑展品位置",
+          hidden: true,
+          activeMenu: "/menu/menu2"
+        }
+      },
+      {
         path: "menu3",
         component: () => import("@/views/menu/menu3/index.vue"),
         name: "Menu3",
