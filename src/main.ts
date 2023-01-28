@@ -17,6 +17,8 @@ import "vxe-table/lib/style.css"
 import "vxe-table-plugin-element/dist/style.css"
 import "@/styles/index.scss"
 
+import echarts from "@/plugins/echarts/index"
+
 const app = createApp(App)
 
 /** 加载插件 */
@@ -26,4 +28,5 @@ loadSvg(app)
 /** 加载自定义指令 */
 loadDirectives(app)
 
+app.config.globalProperties.$echarts = echarts
 app.use(store).use(router).mount("#app")
