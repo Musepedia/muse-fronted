@@ -6,9 +6,12 @@ import { useRouter } from "vue-router"
 import { getMuseumListApi, uploadFile } from "@/api/adminMuseum"
 import { getZoneListApi, addZoneApi, updateZoneApi, changeZoneEnableApi } from "@/api/MuseumZone"
 import { Plus } from "@element-plus/icons-vue"
+import { usePagination } from "@/hooks/usePagination"
 
 const router = useRouter()
 const userStore = useUserStoreHook()
+//分页
+const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 const loading = ref<boolean>(false)
 const handleEditZonePosition = () => {
@@ -24,6 +27,7 @@ const createData = () => {
     loading.value = false
     choseMuseumDialogVisible.value = false
     getZoneList()
+    console.log(1)
   } else if (userStore.roles[0] !== "sys_admin") {
     ElMessage.warning("暂未绑定博物馆,请先绑定")
     router.push({ path: "/dashboard" })
@@ -88,8 +92,8 @@ const zoneList = ref<any[]>([])
 const getZoneList = () => {
   loading.value = true
   getZoneListApi({
-    current: 1,
-    size: 9999,
+    current: paginationData.currentPage,
+    size: paginationData.pageSize,
     museumId: (userStore.museumID !== null ? userStore.museumID : museumChosen.value) as number,
     name: undefined,
     createTime: undefined,
@@ -97,6 +101,7 @@ const getZoneList = () => {
     order: undefined
   })
     .then((res: any) => {
+      paginationData.total = res.data.data.total
       zoneList.value = res.data.data.data
     })
     .catch(() => {
@@ -306,6 +311,8 @@ const handleDetails = (item: any) => {
 }
 
 createData()
+
+watch([() => paginationData.currentPage, () => paginationData.pageSize], getZoneList)
 </script>
 
 <template>
@@ -368,6 +375,19 @@ createData()
         </el-card>
       </el-col>
     </el-row>
+    <!-- 分页 -->
+    <div class="pager-wrapper">
+      <el-pagination
+        background
+        :layout="paginationData.layout"
+        :page-sizes="paginationData.pageSizes"
+        :total="paginationData.total"
+        :page-size="paginationData.pageSize"
+        :currentPage="paginationData.currentPage"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
+    </div>
 
     <!-- 图片预览 组件 -->
     <el-dialog v-model="previewPicDialog" @close="previewPicDialog = false" style="display: block" width="50%">
@@ -477,5 +497,10 @@ createData()
   margin-left: 0;
   margin-right: 3px;
   padding: 8px 10px;
+}
+
+.pager-wrapper {
+  display: flex;
+  justify-content: flex-end;
 }
 </style>
