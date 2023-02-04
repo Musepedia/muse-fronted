@@ -80,12 +80,12 @@ export default defineComponent({
     VChart
   },
   provide: {
-    [THEME_KEY]: "light"
+    [THEME_KEY as any]: "light"
   },
   setup() {
     /** 获取今日用户新增 */
     const user = ref<number>(0)
-    const countList = ref([])
+    const countList = ref<any[]>([])
     const userStore = useUserStoreHook()
     const getTodayNewUser = () => {
       const endDate = moment(new Date()).format("YYYY-MM-DD")
@@ -112,8 +112,8 @@ export default defineComponent({
     getTodayNewUser()
 
     /** 获取过去一周的流量--图表数据 */
-    const weekUserList = ref([])
-    const weekTrafficList = ref([])
+    const weekUserList = ref<any[]>([])
+    const weekTrafficList = ref<any[]>([])
     const getWeekTraffic = () => {
       const endDate = moment(new Date()).format("YYYY-MM-DD")
       const beginDate = moment(new Date().setDate(new Date().getDate() - 6)).format("YYYY-MM-DD")
@@ -153,7 +153,7 @@ export default defineComponent({
     })
 
     /** 获取热门展区 */
-    const hotHallList = ref([])
+    const hotHallList = ref<any[]>([])
     const getHotHall = () => {
       getHotHallApi({
         k: 6,
@@ -166,7 +166,7 @@ export default defineComponent({
     getHotHall()
 
     /** 获取热门展品 */
-    const hotExhibitList = ref([])
+    const hotExhibitList = ref<any[]>([])
     const getHotExhibit = () => {
       getHotExhibitApi({
         k: 6,
