@@ -20,8 +20,8 @@ interface IPaginationData {
 const defaultPaginationData: IDefaultPaginationData = {
   total: 0,
   currentPage: 1,
-  pageSizes: [10, 20, 50],
-  pageSize: 10,
+  pageSizes: [8, 10, 20, 50],
+  pageSize: 8,
   layout: "total, sizes, prev, pager, next, jumper"
 }
 

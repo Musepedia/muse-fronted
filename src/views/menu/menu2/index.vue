@@ -16,9 +16,12 @@ import {
 import { getMuseumListApi, uploadFile } from "@/api/adminMuseum"
 import { ElMessage, type FormInstance, type FormRules, ElMessageBox, ElInput } from "element-plus"
 import { Plus } from "@element-plus/icons-vue"
+import { usePagination } from "@/hooks/usePagination"
 
 const router = useRouter()
 const userStore = useUserStoreHook()
+//分页
+const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 /** 通用加载 */
 const loading = ref(false)
@@ -136,12 +139,13 @@ const getExhibitList = () => {
   loading.value = true
   if (zoneChosen.value !== undefined) {
     getExhibitListApi({
-      current: 1,
-      size: 10,
+      current: paginationData.currentPage,
+      size: paginationData.pageSize,
       museumId: (userStore.museumID !== null ? userStore.museumID : museumChosen.value) as number,
       exhibitionHallId: zoneChosen.value
     })
       .then((res) => {
+        paginationData.total = res.data.data.total
         exhibitList.value = res.data.data.data
       })
       .catch(() => {
@@ -482,7 +486,9 @@ const handleInputText = () => {
 
 createData()
 
-watch(zoneChosen, getExhibitList, { immediate: true })
+watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSize], getExhibitList, {
+  immediate: true
+})
 </script>
 
 <template>
@@ -554,6 +560,18 @@ watch(zoneChosen, getExhibitList, { immediate: true })
         </el-card>
       </el-col>
     </el-row>
+    <div class="pager-wrapper">
+      <el-pagination
+        background
+        :layout="paginationData.layout"
+        :page-sizes="paginationData.pageSizes"
+        :total="paginationData.total"
+        :page-size="paginationData.pageSize"
+        :currentPage="paginationData.currentPage"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
+    </div>
 
     <!-- 图片预览 组件 -->
     <el-dialog v-model="previewPicDialog" @close="previewPicDialog = false" style="display: block" width="50%">
@@ -738,5 +756,10 @@ watch(zoneChosen, getExhibitList, { immediate: true })
 }
 :deep(.button-new-tag) {
   margin: 0.5rem;
+}
+
+.pager-wrapper {
+  display: flex;
+  justify-content: flex-end;
 }
 </style>
