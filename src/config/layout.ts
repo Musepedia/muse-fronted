@@ -22,7 +22,7 @@ const layoutSettings: ILayoutSettings = {
   fixedHeader: true,
   showSidebarLogo: true,
   showNotify: true,
-  showThemeSwitch: true,
+  showThemeSwitch: false,
   showScreenfull: true
 }
 
