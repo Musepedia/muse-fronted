@@ -37,7 +37,7 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm i --no-frozen-lockfile
       - run: pnpm build:prod
       - uses: easingthemes/ssh-deploy@main
         env:
