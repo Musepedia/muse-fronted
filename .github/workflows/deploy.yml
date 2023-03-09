@@ -19,6 +19,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
+          cache-dependency-path: "package-lock.json"
       - run: npm i
       - run: npm run build:prod
       - uses: easingthemes/ssh-deploy@main
