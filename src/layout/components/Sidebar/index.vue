@@ -44,9 +44,8 @@ const isCollapse = computed(() => {
         :default-active="activeMenu"
         :collapse="isCollapse"
         :background-color="v3SidebarMenuBgColor"
-        :text-color="v3SidebarMenuTextColor"
         :active-text-color="v3SidebarMenuActiveTextColor"
-        :unique-opened="true"
+        :unique-opened="false"
         :collapse-transition="false"
         mode="vertical"
       >
@@ -130,7 +129,7 @@ const isCollapse = computed(() => {
   :deep(.el-sub-menu) {
     &.is-active {
       .el-sub-menu__title {
-        color: var(--v3-sidebar-menu-active-text-color) !important;
+        color: var(--el-menu-active-color);
         @include tip-line;
       }
     }

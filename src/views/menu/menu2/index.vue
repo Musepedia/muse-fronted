@@ -17,6 +17,7 @@ import { getMuseumListApi, uploadFile } from "@/api/adminMuseum"
 import { ElMessage, type FormInstance, type FormRules, ElMessageBox, ElInput } from "element-plus"
 import { Plus } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
+// import { PageFooter } from "@/layout/components"
 
 const router = useRouter()
 const userStore = useUserStoreHook()
@@ -36,7 +37,7 @@ const choseMuseumDialogVisible = ref(true)
 const createData = () => {
   loading.value = true
   userStore.getInfo()
-  if (userStore.museumID !== null) {
+  if (userStore.museumID !== null || museumChosen.value !== undefined) {
     loading.value = false
     choseMuseumDialogVisible.value = false
     getZoneList()
@@ -53,6 +54,9 @@ const createData = () => {
 /** 获取博物馆列表 */
 const museumList = ref<any[]>([])
 const museumChosen = ref<number>()
+museumChosen.value = Number.isNaN(parseInt(window.sessionStorage.getItem("museumChosen") as string))
+  ? undefined
+  : parseInt(window.sessionStorage.getItem("museumChosen") as string)
 const getMuseumList = () => {
   loading.value = true
   getMuseumListApi({
@@ -85,6 +89,7 @@ const handleChoseMuseum = async () => {
   if (museumChosen.value !== undefined) {
     choseMuseumDialogVisible.value = false
     // userStore.museumID = museumChosen.value
+    window.sessionStorage.setItem("museumChosen", (museumChosen.value as number).toString())
     await getZoneList()
     zoneChosen.value = undefined
     exhibitList.value = []
@@ -249,7 +254,7 @@ const handleUpdate = async () => {
     description: exhibitForm.description,
     figureUrl: figureUrl.value
   }).then((res) => {
-    console.log(res)
+    // console.log(res)
     ElMessage.success("修改成功")
     dialogVisible.value = false
     getExhibitList()
@@ -421,13 +426,13 @@ const handleInputAlias = () => {
     exhibitAlias: aliasDetail.value
   })
     .then((res) => {
-      console.log(res.data)
+      // console.log(res.data)
       ElMessage.success("别名新增成功")
     })
     .finally(() => {
       inputVisible.value = false
       inputValue.value = ""
-      console.log(aliasDetail.value)
+      // console.log(aliasDetail.value)
     })
 }
 /** end */
@@ -443,13 +448,13 @@ const TextRef = ref<InstanceType<typeof ElInput>>()
 
 const handleCloseText = (text: string) => {
   textDetail.value.splice(textDetail.value.indexOf(text), 1)
-  console.log(textDetail.value)
+  // console.log(textDetail.value)
 
   updateExhibitTextApi({
     exhibitId: currentDetailId.value as number,
     exhibitText: textDetail.value
   }).then((res) => {
-    console.log(res.data)
+    // console.log(res.data)
     ElMessage.success("文本删除成功")
   })
 }
@@ -474,13 +479,13 @@ const handleInputText = () => {
     exhibitText: textDetail.value
   })
     .then((res) => {
-      console.log(res.data)
+      // console.log(res.data)
       ElMessage.success("文本新增成功")
     })
     .finally(() => {
       textVisible.value = false
       textValue.value = ""
-      console.log(textDetail.value)
+      // console.log(textDetail.value)
     })
 }
 
@@ -684,6 +689,7 @@ watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSi
       />
       <el-button v-else class="button-new-tag ml-1" size="small" @click="showText">+ New Text</el-button>
     </el-dialog>
+    <!-- <PageFooter /> -->
   </div>
 </template>
 

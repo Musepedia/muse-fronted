@@ -1,6 +1,34 @@
 <template>
   <div>
+    <el-dialog
+      v-model="choseMuseumDialogVisible"
+      title="请选择一个博物馆"
+      width="30%"
+      style="display: block"
+      :before-close="handleChoseMuseumClose"
+      loading="loading"
+    >
+      <el-select style="margin: auto" v-model="museumChosen" placeholder="请选择博物馆">
+        <el-option v-for="item in museumList" :key="item.id" :label="item.name" :value="item.id" />
+      </el-select>
+      <template #footer>
+        <span class="chose-footer">
+          <el-button @click="handleChoseMuseum">确认选择</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
     <div class="museum-title">我的博物馆</div>
+    <el-row class="search-wrapper">
+      <el-button
+        v-if="userStore.roles[0] === 'sys_admin'"
+        type="info"
+        plain
+        style="margin-right: 8%"
+        @click="handleChoseMuseumAgain"
+        >选择博物馆</el-button
+      >
+    </el-row>
 
     <div class="today-user-analysis">
       <el-row :gutter="25">
@@ -58,6 +86,7 @@
         </el-card>
       </el-space>
     </div>
+    <!-- <PageFooter /> -->
   </div>
 </template>
 
@@ -71,6 +100,10 @@ import { ref, defineComponent, provide } from "vue"
 import { getNewUserApi, getHotHallApi, getHotExhibitApi } from "@/api/dataAnalysis"
 import { useUserStoreHook } from "@/store/modules/user"
 import moment from "moment"
+import { getMuseumListApi } from "@/api/adminMuseum"
+import { ElMessage } from "element-plus"
+import { useRouter } from "vue-router"
+// import { PageFooter } from "@/layout/components"
 
 use([CanvasRenderer, LineChart, GridComponent, TitleComponent, TooltipComponent])
 
@@ -83,10 +116,83 @@ export default defineComponent({
     [THEME_KEY as any]: "light"
   },
   setup() {
+    const userStore = useUserStoreHook()
+    const router = useRouter()
+
+    const loading = ref(false) //通用加载
+    const choseMuseumDialogVisible = ref(true)
+    const museumChosen = ref<number>()
+    museumChosen.value = Number.isNaN(parseInt(window.sessionStorage.getItem("museumChosen") as string))
+      ? undefined
+      : parseInt(window.sessionStorage.getItem("museumChosen") as string)
+    const createData = () => {
+      loading.value = true
+      userStore.getInfo()
+      if (userStore.museumID !== null || museumChosen.value !== undefined) {
+        loading.value = false
+        choseMuseumDialogVisible.value = false
+      } else if (userStore.roles[0] !== "sys_admin") {
+        ElMessage.warning("暂未绑定博物馆,请先绑定")
+        router.push({ path: "/dashboard" })
+      } else {
+        //系统管理员需选择博物馆
+        getMuseumList()
+        loading.value = false
+      }
+    }
+    createData()
+
+    /** 系统管理员可以再次重新选择博物馆 */
+    const handleChoseMuseumAgain = () => {
+      loading.value = true
+      choseMuseumDialogVisible.value = true
+      getMuseumList()
+      loading.value = false
+    }
+    /* 获取博物馆列表 */
+    const museumList = ref<any[]>([])
+    const getMuseumList = () => {
+      loading.value = true
+      getMuseumListApi({
+        current: 1,
+        size: 9999,
+        name: undefined,
+        createTime: undefined,
+        updateTime: undefined
+      })
+        .then((res) => {
+          museumList.value = res.data.data.data
+        })
+        .catch(() => {
+          museumList.value = []
+        })
+        .finally(() => {
+          loading.value = false
+        })
+    }
+
+    const handleChoseMuseumClose = () => {
+      if (userStore.museumID === null && museumChosen.value === null) {
+        ElMessage.warning("请先选择一个博物馆")
+      } else {
+        choseMuseumDialogVisible.value = false
+      }
+    }
+
+    const handleChoseMuseum = async () => {
+      if (museumChosen.value !== undefined) {
+        choseMuseumDialogVisible.value = false
+        // userStore.museumID = museumChosen.value
+        window.sessionStorage.setItem("museumChosen", (museumChosen.value as number).toString())
+      } else {
+        ElMessage.warning("还未选择博物馆！")
+      }
+    }
+
     /** 获取今日用户新增 */
     const user = ref<number>(0)
     const countList = ref<any[]>([])
-    const userStore = useUserStoreHook()
+
     const getTodayNewUser = () => {
       const endDate = moment(new Date()).format("YYYY-MM-DD")
       const beginDate = moment(new Date().setDate(new Date().getDate() - 1)).format("YYYY-MM-DD")
@@ -99,7 +205,7 @@ export default defineComponent({
       getNewUserApi({
         beginDate: beginDate,
         endDate: endDate,
-        museumId: (userStore.museumID !== null ? userStore.museumID : 0) as number
+        museumId: (userStore.museumID !== null ? userStore.museumID : museumChosen.value) as number
       }).then((res) => {
         countList.value = res.data.data
         user.value = countList.value.reduce(function (prev, cur, countList) {
@@ -120,7 +226,7 @@ export default defineComponent({
       getNewUserApi({
         beginDate: beginDate,
         endDate: endDate,
-        museumId: (userStore.museumID !== null ? userStore.museumID : 0) as number
+        museumId: (userStore.museumID !== null ? userStore.museumID : museumChosen.value) as number
       }).then((res) => {
         weekUserList.value = res.data.data
         for (const item of weekUserList.value) {
@@ -160,7 +266,7 @@ export default defineComponent({
         museumId: (userStore.museumID !== null ? userStore.museumID : 0) as number
       }).then((res) => {
         hotHallList.value = res.data.data
-        console.log(res.data)
+        // console.log(res.data)
       })
     }
     getHotHall()
@@ -173,17 +279,41 @@ export default defineComponent({
         museumId: (userStore.museumID !== null ? userStore.museumID : 0) as number
       }).then((res) => {
         hotExhibitList.value = res.data.data
-        console.log(res.data)
+        // console.log(res.data)
       })
     }
     getHotExhibit()
 
-    return { option, value, user, hotHallList, hotExhibitList }
+    return {
+      option,
+      value,
+      user,
+      hotHallList,
+      hotExhibitList,
+      userStore,
+      museumChosen,
+      museumList,
+      handleChoseMuseumAgain,
+      choseMuseumDialogVisible,
+      handleChoseMuseumClose,
+      handleChoseMuseum
+    }
   }
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+.search-wrapper {
+  display: flex;
+  margin-bottom: 20px;
+  align-items: center;
+  justify-content: flex-end;
+  :deep(.el-button.is-plain) {
+    --el-button-text-color: #292929;
+    --el-button-border-color: #1f1f1f;
+    --el-button-hover-text-color: #f5f3f3;
+  }
+}
 :deep().el-calendar__body {
   padding: 0;
 }
