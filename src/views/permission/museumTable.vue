@@ -25,7 +25,7 @@ const handleMapOpen = () => {
 }
 
 mapInit.then((BMap: any) => {
-  console.log(BMap)
+  // console.log(BMap)
   const map = new BMap.Map("map")
   map.centerAndZoom(new BMap.Point(121.4, 31.25), 8) //初始化地图，设置城市和地图级别
   map.enableScrollWheelZoom(true)
@@ -96,7 +96,7 @@ function movePoint(BMap: any, map: any, latlng: any) {
 function latlngToAddress(BMap: any, latlng: any) {
   const geoc = new BMap.Geocoder()
   geoc.getLocation(latlng, function (rs: any) {
-    console.log(rs.surroundingPois[0])
+    // console.log(rs.surroundingPois[0])
     address.value = rs.surroundingPois[0].address + rs.surroundingPois[0].title
     latitude.value = rs.surroundingPois[0].point.lat
     longitude.value = rs.surroundingPois[0].point.lng

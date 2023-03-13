@@ -12,7 +12,6 @@ import Screenfull from "@/components/Screenfull/index.vue"
 import Notify from "@/components/Notify/index.vue"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { type setpwdData, setUserpwd } from "@/api/userInfo"
-import { conditionalExpression } from "@babel/types"
 
 const router = useRouter()
 const appStore = useAppStore()

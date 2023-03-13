@@ -6,6 +6,7 @@ import { User, Lock, Key, Picture, Loading } from "@element-plus/icons-vue"
 import ThemeSwitch from "@/components/ThemeSwitch/index.vue"
 import { type FormInstance, FormRules } from "element-plus"
 import { type ILoginData, getLoginCodeApi } from "@/api/login"
+// import { PageFooter } from "@/layout/components"
 
 const router = useRouter()
 const loginFormRef = ref<FormInstance | null>(null)
@@ -130,7 +131,7 @@ createCode()
             </el-input>
           </el-form-item>
           <div style="display: flex; flex-direction: row; justify-content: space-around">
-            <el-button :loading="loading" color="#e6a23c" size="large" plain @click="handleLogin"> 注册 </el-button>
+            <!-- <el-button :loading="loading" color="#e6a23c" size="large" plain @click="handleLogin"> 注册 </el-button> -->
             <el-button
               :loading="loading"
               color="#e6a23c"

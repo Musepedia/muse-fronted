@@ -2,7 +2,7 @@
 const props = defineProps({
   collapse: {
     type: Boolean,
-    default: true
+    default: false
   }
 })
 </script>
@@ -26,7 +26,7 @@ const props = defineProps({
   width: 100%;
   height: var(--v3-header-height);
   line-height: var(--v3-header-height);
-  background-color:white;
+  background-color: rgb(255, 255, 255);
   text-align: center;
   overflow: hidden;
   .sidebar-logo {

@@ -7,6 +7,7 @@ import { getMuseumListApi, uploadFile } from "@/api/adminMuseum"
 import { getZoneListApi, addZoneApi, updateZoneApi, changeZoneEnableApi } from "@/api/MuseumZone"
 import { Plus } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
+// import { PageFooter } from "@/layout/components"
 
 const router = useRouter()
 const userStore = useUserStoreHook()
@@ -22,12 +23,12 @@ const handleEditZonePosition = () => {
 const choseMuseumDialogVisible = ref(true)
 const createData = () => {
   loading.value = true
+  // console.log(museumChosen.value, !Number.isNaN(museumChosen.value))
   userStore.getInfo()
-  if (userStore.museumID !== null) {
+  if (userStore.museumID !== null || museumChosen.value !== undefined) {
     loading.value = false
     choseMuseumDialogVisible.value = false
     getZoneList()
-    console.log(1)
   } else if (userStore.roles[0] !== "sys_admin") {
     ElMessage.warning("暂未绑定博物馆,请先绑定")
     router.push({ path: "/dashboard" })
@@ -49,6 +50,9 @@ const handleChoseMuseumAgain = () => {
 /** 获取博物馆列表 */
 const museumList = ref<any[]>([])
 const museumChosen = ref<number>()
+museumChosen.value = Number.isNaN(parseInt(window.sessionStorage.getItem("museumChosen") as string))
+  ? undefined
+  : parseInt(window.sessionStorage.getItem("museumChosen") as string)
 const getMuseumList = () => {
   loading.value = true
   getMuseumListApi({
@@ -79,8 +83,10 @@ const handleChoseMuseumClose = () => {
 
 const handleChoseMuseum = () => {
   if (museumChosen.value !== undefined) {
+    // if (Number.isNaN(museumChosen.value)) {
     choseMuseumDialogVisible.value = false
     // userStore.museumID = museumChosen.value
+    window.sessionStorage.setItem("museumChosen", (museumChosen.value as number).toString())
     getZoneList()
   } else {
     ElMessage.warning("还未选择博物馆！")
@@ -388,6 +394,8 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getZone
         @current-change="handleCurrentChange"
       />
     </div>
+
+    <!-- <PageFooter /> -->
 
     <!-- 图片预览 组件 -->
     <el-dialog v-model="previewPicDialog" @close="previewPicDialog = false" style="display: block" width="50%">
