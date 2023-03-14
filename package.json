@@ -34,6 +34,7 @@
     "screenfull": "^6.0.2",
     "vue": "^3.2.41",
     "vue-echarts": "^6.5.1",
+    "vue-grid-layout": "3.0.0-beta1",
     "vue-router": "^4.1.6",
     "vxe-table": "^4.3.5",
     "vxe-table-plugin-element": "^3.0.6",

@@ -115,4 +115,4 @@ Copyright (c) 2022 [pany](https://github.com/pany-ang)
 ├─ .prettier.config.js   # prettier 配置
 ├─ tsconfig.json         # ts 编译配置
 ├─ unocss.config.ts      # unocss 配置
-└─ vite.config.ts        # vite 配置。
+└─ vite.config.ts        # vite 配置

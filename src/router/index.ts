@@ -1,4 +1,4 @@
-import { type RouteRecordRaw, createRouter, createWebHashHistory, createWebHistory } from "vue-router"
+import { createRouter, createWebHashHistory, createWebHistory, type RouteRecordRaw } from "vue-router"
 
 const Layout = () => import("@/layout/index.vue")
 
@@ -108,6 +108,34 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "Menu3",
         meta: {
           title: "数据分析"
+        }
+      }
+    ]
+  },
+  {
+    path: "/muse-school",
+    component: Layout,
+    redirect: "/muse-school/home-page",
+    name: "muse-school",
+    meta: {
+      title: "MuseSchool",
+      svgIcon: "muse-school"
+    },
+    children: [
+      {
+        path: "home-page",
+        component: () => import("@/views/muse-school/home-page/index.vue"),
+        name: "home-page",
+        meta: {
+          title: "首页"
+        }
+      },
+      {
+        path: "manual-design",
+        component: () => import("@/views/muse-school/manual-design/index.vue"),
+        name: "manual-design",
+        meta: {
+          title: "设计手册"
         }
       }
     ]

@@ -18,6 +18,8 @@ import "vxe-table-plugin-element/dist/style.css"
 import "@/styles/index.scss"
 
 import echarts from "@/plugins/echarts/index"
+// @ts-ignore
+import VueGridLayout from "vue-grid-layout"
 
 const app = createApp(App)
 
@@ -29,4 +31,4 @@ loadSvg(app)
 loadDirectives(app)
 
 app.config.globalProperties.$echarts = echarts
-app.use(store).use(router).mount("#app")
+app.use(store).use(router).use(VueGridLayout).mount("#app")
