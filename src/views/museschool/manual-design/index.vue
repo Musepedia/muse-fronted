@@ -1,6 +1,13 @@
 <script lang="ts" setup>
 import GeneralComponent from "@/views/museschool/components/generalComponent.vue"
 import { onMounted, reactive, ref } from "vue"
+import { useRouter } from "vue-router"
+import { Component } from "museschool"
+import { useMuseschoolStore } from "@/store/modules/museschool"
+
+const router = useRouter()
+
+const museschoolStore = useMuseschoolStore()
 
 const gridlayout = ref(null)
 const designZone = ref(null)
@@ -8,39 +15,19 @@ const designZone = ref(null)
 const title = ref("研学手册标题")
 const chosenComponent = ref("")
 
-interface Component {
-  i: string
-  x: number
-  y: number
-  w: number
-  h: number
-  minW: number
-  minH: number
-  maxW: number
-  maxH: number
-  type: string
-  componentProps?: {
-    content?: string
-    fontSize?: string
-    fontWeight?: string
-    color?: string
-    background?: string
-    url?: string
-  } | null
-}
-
 //原型组件列表
 const prototypeComponentList = reactive([
   {
     i: "-1",
     type: "0",
-    componentProps: { content: "文本组件" }
+    componentProps: { content: "文本组件", background: "white" }
   },
   {
     i: "-2",
     type: "1",
     componentProps: {
-      url: "https://northpicture.oss-cn-shanghai.aliyuncs.com/img/202302202247827.png"
+      url: "https://northpicture.oss-cn-shanghai.aliyuncs.com/img/202302202247827.png",
+      background: "white"
     }
   }
 ])
@@ -177,6 +164,12 @@ function deleteComponent(i: string) {
 function chooseComponent(i: string) {
   chosenComponent.value = i
 }
+
+//预览手册
+function toManualPreview() {
+  museschoolStore.componentList = componentList
+  router.push({ name: "manual-preview" })
+}
 </script>
 
 <template>
@@ -189,8 +182,8 @@ function chooseComponent(i: string) {
       <!--      <div>undo-redo</div>-->
       <div class="title">{{ title }}</div>
       <div class="show-export">
-        <el-button color="#2565F1" icon="Monitor" @click="changeComponent">演示</el-button>
-        <el-button color="#FFFFFF" icon="Download">导出</el-button>
+        <el-button color="#2565F1" icon="Monitor" @click="toManualPreview">预览</el-button>
+        <el-button color="#FFFFFF" icon="Download" @click="changeComponent">导出</el-button>
       </div>
     </div>
     <div class="main">

@@ -136,6 +136,12 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: {
           title: "设计手册"
         }
+      },
+      {
+        path: "manual-preview",
+        component: () => import("@/views/museschool/manual-preview/index.vue"),
+        name: "manual-preview",
+        props: true
       }
     ]
   },
