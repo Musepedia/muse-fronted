@@ -1,27 +1,24 @@
 <script lang="ts" setup>
-// import { reactive, ref, watch } from "vue"
-// import { useRouter } from "vue-router"
-//
-// const router = useRouter()
 import { onMounted, ref } from "vue"
 
+//图片组件参数格式
+// componentProps: { url: "", background: ""}
 const props = defineProps(["i", "componentProps"])
-const url = ref("https://northpicture.oss-cn-shanghai.aliyuncs.com/img/202302202247827.png")
+
+//组件样式
+const componentStyle = ref("")
+
 onMounted(() => {
-  console.log(props)
-  const newId = "museText-" + props.i
-  const appContainer = document.getElementById("museText")
-  if (appContainer !== null) {
-    appContainer.id = newId
-  } else {
-    console.error("cannot find appContainer")
+  //解析componentProps
+  if (props.componentProps.background != null) {
+    componentStyle.value = componentStyle.value + "background:" + props.componentProps.background + ";"
   }
 })
 </script>
 
 <template>
-  <div id="museImage" class="app-container">
-    <el-image :src="url" class="image1" />
+  <div :style="componentStyle" class="app-container">
+    <el-image :src="props.componentProps.url" class="image1" />
   </div>
 </template>
 
@@ -29,8 +26,6 @@ onMounted(() => {
 .app-container {
   width: 100%;
   height: 100%;
-  background-color: wheat;
-  border: 1px solid #c9c9c9;
 
   .image1 {
     width: 100%;

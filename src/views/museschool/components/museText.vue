@@ -1,27 +1,32 @@
 <script lang="ts" setup>
-// import { reactive, ref, watch } from "vue"
-// import { useRouter } from "vue-router"
-//
-// const router = useRouter()
-import { onMounted } from "vue"
+import { onMounted, ref } from "vue"
 
+//文本组件参数格式
+// componentProps: { content: "", fontSize: "", fontWeight: "", color: "", background: ""}
 const props = defineProps(["i", "componentProps"])
 
+//组件样式
+const componentStyle = ref("")
+
 onMounted(() => {
-  console.log(props)
-  const newId = "museText-" + props.i
-  const appContainer = document.getElementById("museText")
-  if (appContainer !== null) {
-    appContainer.id = newId
-  } else {
-    console.error("cannot find appContainer")
+  //解析componentProps
+  if (props.componentProps.fontSize != null) {
+    componentStyle.value = componentStyle.value + "font-size:" + props.componentProps.fontSize + ";"
+  }
+  if (props.componentProps.fontWeight != null) {
+    componentStyle.value = componentStyle.value + "font-weight:" + props.componentProps.fontWeight + ";"
+  }
+  if (props.componentProps.color != null) {
+    componentStyle.value = componentStyle.value + "color:" + props.componentProps.color + ";"
+  }
+  if (props.componentProps.background != null) {
+    componentStyle.value = componentStyle.value + "background:" + props.componentProps.background + ";"
   }
 })
 </script>
 
 <template>
-  <div id="museText" class="app-container">
-    <h3>文本组件</h3>
+  <div :style="componentStyle" class="app-container">
     <span>{{ props.componentProps.content }}</span>
   </div>
 </template>
@@ -30,7 +35,5 @@ onMounted(() => {
 .app-container {
   width: 100%;
   height: 100%;
-  background-color: wheat;
-  border: 1px solid #c9c9c9;
 }
 </style>

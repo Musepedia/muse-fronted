@@ -1,20 +1,48 @@
 <script lang="ts" setup>
 import GeneralComponent from "@/views/museschool/components/generalComponent.vue"
 import { onMounted, reactive, ref } from "vue"
-import { Download, Monitor } from "@element-plus/icons-vue"
 
 const gridlayout = ref(null)
+const designZone = ref(null)
 
 const title = ref("研学手册标题")
+const chosenComponent = ref("")
+
+interface Component {
+  i: string
+  x: number
+  y: number
+  w: number
+  h: number
+  minW: number
+  minH: number
+  maxW: number
+  maxH: number
+  type: string
+  componentProps?: {
+    content?: string
+    fontSize?: string
+    fontWeight?: string
+    color?: string
+    background?: string
+    url?: string
+  } | null
+}
 
 //原型组件列表
 const prototypeComponentList = reactive([
   {
     i: "-1",
     type: "0",
-    componentProps: { content: "原型" }
+    componentProps: { content: "文本组件" }
   },
-  { i: "-2", type: "1", componentProps: {} }
+  {
+    i: "-2",
+    type: "1",
+    componentProps: {
+      url: "https://northpicture.oss-cn-shanghai.aliyuncs.com/img/202302202247827.png"
+    }
+  }
 ])
 
 //gridlayout列数，行高
@@ -22,26 +50,49 @@ const colNum = ref(50)
 const rowHeight = ref(10)
 
 //组件列表
-const componentList = reactive([
+const componentList: Component[] = reactive([
   {
     i: "1",
     x: 0,
     y: 0,
     w: 10,
     h: 10,
-    minW: 10,
-    minH: 10,
+    minW: 1,
+    minH: 1,
     maxW: 20,
     maxH: 20,
     type: "0",
-    componentProps: { content: "文本内容" }
+    componentProps: {
+      content: "文本内容",
+      fontSize: "50px",
+      fontWeight: "bold",
+      color: "red",
+      background: "#fffaaa"
+    }
   },
-  { i: "2", x: 0, y: 4, w: 10, h: 10, minW: 5, minH: 5, maxW: 20, maxH: 20, type: "1", componentProps: {} }
+  {
+    i: "2",
+    x: 0,
+    y: 4,
+    w: 10,
+    h: 10,
+    minW: 1,
+    minH: 1,
+    maxW: 20,
+    maxH: 20,
+    type: "1",
+    componentProps: {
+      url: "https://northpicture.oss-cn-shanghai.aliyuncs.com/img/202302202247827.png"
+    }
+  }
 ])
 
+const changeComponent = () => {
+  componentList[0].componentProps!.content = "asdasdasd"
+}
+
 //监测鼠标位置
-const zero = 0
-const mouseXY = { x: zero, y: zero }
+const mouseXY = { x: 0, y: 0 }
 
 onMounted(() => {
   //添加鼠标位置监听器
@@ -55,43 +106,76 @@ onMounted(() => {
   )
 })
 
-function dragend() {
-  console.log("dragend")
-  const element = document.getElementById("design-zone")
-  console.log(element)
-  if (element !== null) {
-    const parentRect = element.getBoundingClientRect()
-    let mouseInGrid = false
-    if (
-      mouseXY.x > parentRect.left &&
-      mouseXY.x < parentRect.right &&
-      mouseXY.y > parentRect.top &&
-      mouseXY.y < parentRect.bottom
-    ) {
-      mouseInGrid = true
+function dragend(index: Number) {
+  const parentRect = (designZone.value as unknown as HTMLElement).getBoundingClientRect()
+
+  if (
+    mouseXY.x > parentRect.left &&
+    mouseXY.x < parentRect.right &&
+    mouseXY.y > parentRect.top &&
+    mouseXY.y < parentRect.bottom
+  ) {
+    let componentProps = null
+    switch (index) {
+      case 0:
+        componentProps = {
+          content: "文本内容",
+          fontSize: "",
+          fontWeight: "",
+          color: "",
+          background: ""
+        }
+        break
+      case 1:
+        componentProps = {
+          url: "https://northpicture.oss-cn-shanghai.aliyuncs.com/img/202302202247827.png",
+          background: ""
+        }
+        break
     }
-    if (mouseInGrid) {
-      const x = Math.trunc((mouseXY.x - parentRect.left) / (parentRect.width / colNum.value))
-      let y = Math.trunc((mouseXY.y - parentRect.top) / rowHeight.value)
-      if (y > 1) {
-        y--
-      }
-      console.log(x, "   ", y)
-      componentList.push({
-        i: (Number(componentList[componentList.length - 1].i) + 1).toString(),
-        x: x,
-        y: y,
-        w: 10,
-        h: 10,
-        minW: 10,
-        minH: 10,
-        maxW: 20,
-        maxH: 20,
-        type: "0",
-        componentProps: {}
-      })
+
+    let i: string
+    if (componentList.length > 0) {
+      i = (Number(componentList[componentList.length - 1].i) + 1).toString()
+    } else {
+      i = "1"
     }
+
+    const component: Component = {
+      i: i,
+      x: Math.trunc((mouseXY.x - parentRect.left) / (parentRect.width / colNum.value)),
+      y: Math.trunc((mouseXY.y - parentRect.top) / rowHeight.value),
+      w: 10,
+      h: 10,
+      minW: 1,
+      minH: 1,
+      maxW: 20,
+      maxH: 20,
+      type: index.toString(),
+      componentProps: componentProps
+    }
+    chosenComponent.value = component.i
+    componentList.push(component)
   }
+}
+
+//删除组件
+function deleteComponent(i: string) {
+  // 移除数组中i==1的项
+  const index = componentList.findIndex(function (item) {
+    return item.i == i
+  })
+  if (index > -1) {
+    componentList.splice(index, 1)
+  }
+  if (chosenComponent.value == i) {
+    chosenComponent.value = ""
+  }
+}
+
+//选择组件
+function chooseComponent(i: string) {
+  chosenComponent.value = i
 }
 </script>
 
@@ -105,33 +189,37 @@ function dragend() {
       <!--      <div>undo-redo</div>-->
       <div class="title">{{ title }}</div>
       <div class="show-export">
-        <el-button :icon="Monitor" color="#2565F1">演示</el-button>
-        <el-button :icon="Download" color="#FFFFFF">导出</el-button>
+        <el-button color="#2565F1" icon="Monitor" @click="changeComponent">演示</el-button>
+        <el-button color="#FFFFFF" icon="Download">导出</el-button>
       </div>
     </div>
     <div class="main">
       <div class="prototype-components">
         <div
-          v-for="item in prototypeComponentList"
+          v-for="(item, index) in prototypeComponentList"
           :key="item.i"
           class="droppable-element"
           draggable="true"
-          @drag="drag"
-          @dragend="dragend"
+          @dragend="dragend(index)"
         >
-          <general-component :component-props="item.componentProps" :i="item.i" :type="item.type" />
+          <general-component
+            :component-props="item.componentProps"
+            :i="item.i"
+            :showDelete="false"
+            :type="item.type"
+            style="background: transparent"
+          />
         </div>
       </div>
-      <div id="design-zone">
+      <div ref="designZone" class="design-zone">
         <grid-layout
           ref="gridlayout"
-          v-model:layout="componentList"
           :col-num="colNum"
-          :is-draggable="true"
-          :is-resizable="true"
+          :layout="componentList"
+          :margin="[0, 0]"
+          :preventCollision="true"
           :row-height="rowHeight"
-          :use-css-transforms="true"
-          :vertical-compact="false"
+          :verticalCompact="false"
           class="vue-grid-layout"
         >
           <grid-item
@@ -148,7 +236,15 @@ function dragend() {
             :y="item.y"
             class="grid-item"
           >
-            <general-component :component-props="item.componentProps" :i="item.i" :type="item.type" />
+            <general-component
+              :component-props="item.componentProps"
+              :i="item.i"
+              :showDelete="true"
+              :type="item.type"
+              style="background: transparent"
+              @delete-component="deleteComponent"
+              @choose-component="chooseComponent"
+            />
           </grid-item>
         </grid-layout>
       </div>
@@ -232,7 +328,7 @@ function dragend() {
       }
     }
 
-    #design-zone {
+    .design-zone {
       width: 55%;
       height: 96%;
       border-radius: 5px;
