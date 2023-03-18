@@ -113,26 +113,25 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
-    path: "/muse-school",
-    component: Layout,
-    redirect: "/muse-school/home-page",
+    path: "/museschool",
+    redirect: "/museschool/homepage",
     name: "muse-school",
     meta: {
-      title: "MuseSchool",
-      svgIcon: "muse-school"
+      title: "Museschool",
+      svgIcon: "museschool"
     },
     children: [
       {
-        path: "home-page",
-        component: () => import("@/views/muse-school/home-page/index.vue"),
-        name: "home-page",
+        path: "homepage",
+        component: () => import("@/views/museschool/homepage/index.vue"),
+        name: "homepage",
         meta: {
           title: "首页"
         }
       },
       {
         path: "manual-design",
-        component: () => import("@/views/muse-school/manual-design/index.vue"),
+        component: () => import("@/views/museschool/manual-design/index.vue"),
         name: "manual-design",
         meta: {
           title: "设计手册"
