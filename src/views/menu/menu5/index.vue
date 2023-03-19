@@ -221,6 +221,7 @@ const handleUpload = () => {
       pList.value[index + 1] = new Promise((resolve, reject) => {
         if (item.url !== undefined) {
           imageList.value.push(item.url)
+          resolve(true)
         } else {
           const param = new FormData()
           param.append("file", item)
@@ -244,7 +245,7 @@ const handleUpload = () => {
 
 const handleUpdate = async () => {
   await handleUpload()
-  console.log(imageList.value)
+  // console.log(imageList.value)
   updateCreativeApi({
     id: currentUpdateId.value as number,
     name: creativeForm.name,
