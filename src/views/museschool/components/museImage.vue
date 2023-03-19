@@ -31,7 +31,7 @@ watch(props, async () => {
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style lang="scss" media="print" scoped>
 .app-container {
   width: 100%;
   height: 100%;

@@ -1,9 +1,4 @@
-<script lang="ts" setup>
-// import { reactive, ref, watch } from "vue"
-// import { useRouter } from "vue-router"
-//
-// const router = useRouter()
-</script>
+<script lang="ts" setup></script>
 
 <template>
   <div class="app-container">home-page</div>

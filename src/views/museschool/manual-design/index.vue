@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import GeneralComponent from "@/views/museschool/components/generalComponent.vue"
-import { onMounted, reactive, ref, watch } from "vue"
+import { onMounted, onUnmounted, reactive, ref, watch } from "vue"
 import { useRouter } from "vue-router"
 import { Component } from "museschool"
 import { useMuseschoolStore } from "@/store/modules/museschool"
@@ -10,18 +10,19 @@ const router = useRouter()
 const museschoolStore = useMuseschoolStore()
 
 //组件引用
-const gridlayout = ref(null)
 const designZone = ref(null)
 
 //gridlayout列数，行高
 const colNum = ref(50)
 const rowHeight = ref(10)
 
-const title = ref("研学手册标题") //研学组件标题
 const chosenComponent = ref(-1) //当前选择的组件index
 const editComponent = reactive([false, false]) //右侧编辑区域显示内容，index对应原型组件列表，例如若[1]为ture，右侧显示图片组件的编辑区域
 
+const changingTitle = ref(false)
+
 //表单绑定，通过watch监视修改componentList中的对应部分
+const title = ref("研学手册标题")
 const textContent = ref("")
 const fontSize = ref(16)
 const fontWeightOptions = reactive([
@@ -66,44 +67,19 @@ const prototypeComponentList = reactive([
 ])
 
 //组件列表
-const componentList: Component[] = reactive([
-  {
-    i: "1",
-    x: 0,
-    y: 0,
-    w: 10,
-    h: 10,
-    minW: 1,
-    minH: 1,
-    maxW: 20,
-    maxH: 20,
-    type: "0",
-    componentProps: {
-      content: "文本内容",
-      fontSize: "50",
-      fontWeight: "bold",
-      color: "red",
-      background: "#fffaaa"
-    }
-  },
-  {
-    i: "2",
-    x: 0,
-    y: 4,
-    w: 10,
-    h: 10,
-    minW: 1,
-    minH: 1,
-    maxW: 20,
-    maxH: 20,
-    type: "1",
-    componentProps: {
-      url: "https://northpicture.oss-cn-shanghai.aliyuncs.com/img/202302202247827.png"
-    }
-  }
-])
+const componentList = museschoolStore.componentList
 
 onMounted(() => {
+  //若componentList为空，尝试从本地存储获取数据
+  if (componentList.length == 0) {
+    const storedComponentList = JSON.parse(localStorage.getItem("componentList")!)
+    if (storedComponentList) {
+      for (let i = 0; i < storedComponentList.length; i++) {
+        componentList.push(storedComponentList[i])
+      }
+    }
+  }
+
   //添加鼠标位置监听器
   document.addEventListener(
     "dragover",
@@ -113,16 +89,35 @@ onMounted(() => {
     },
     false
   )
+  //添加unload监听器，持续化存储componentList
+  window.addEventListener("beforeunload", () => {
+    localStorage.setItem("componentList", JSON.stringify(componentList))
+  })
+})
+
+onUnmounted(() => {
+  //移除鼠标位置监听器
+  document.removeEventListener(
+    "dragover",
+    function (e) {
+      mouseXY.x = e.clientX
+      mouseXY.y = e.clientY
+    },
+    false
+  )
+  //移除unload监听器
+  window.removeEventListener("beforeunload", () => {
+    localStorage.setItem("componentList", JSON.stringify(componentList))
+  })
 })
 
 //监听选择组件变化
-watch(chosenComponent, async (newChosenComponent, oldChosenComponent) => {
+watch(chosenComponent, (newChosenComponent) => {
   //更改右侧编辑区域显示内容
-  if (oldChosenComponent != -1) {
-    editComponent[parseInt(componentList[oldChosenComponent].type)] = false
+  for (let i = 0; i < editComponent.length; i++) {
+    editComponent[i] = false
   }
   editComponent[parseInt(componentList[newChosenComponent].type)] = true
-  console.log(editComponent)
   //修改表单placeholder
   switch (componentList[newChosenComponent].type) {
     case "0":
@@ -140,25 +135,32 @@ watch(chosenComponent, async (newChosenComponent, oldChosenComponent) => {
 })
 
 //监听表单变化
-watch(textContent, async (newTextContent) => {
+watch(textContent, (newTextContent) => {
   componentList[chosenComponent.value].componentProps!.content = newTextContent
 })
-watch(fontSize, async (newFontSize) => {
+watch(fontSize, (newFontSize) => {
   componentList[chosenComponent.value].componentProps!.fontSize = newFontSize.toString()
-  console.log(componentList[chosenComponent.value].componentProps!.fontSize)
 })
-watch(fontWeight, async (newFontWeight) => {
+watch(fontWeight, (newFontWeight) => {
   componentList[chosenComponent.value].componentProps!.fontWeight = newFontWeight
 })
-watch(fontColor, async (newFontColor) => {
+watch(fontColor, (newFontColor) => {
   componentList[chosenComponent.value].componentProps!.color = newFontColor
 })
-watch(backgroundColor, async (newBackgroundColor) => {
+watch(backgroundColor, (newBackgroundColor) => {
   componentList[chosenComponent.value].componentProps!.background = newBackgroundColor
 })
-watch(imgURL, async (newImgURL) => {
+watch(imgURL, (newImgURL) => {
   componentList[chosenComponent.value].componentProps!.url = newImgURL
 })
+
+//修改标题
+function changeTitle() {
+  changingTitle.value = !changingTitle.value
+  if (!changingTitle.value) {
+    museschoolStore.manualTitle = title
+  }
+}
 
 //拖拽添加组件
 function dragend(index: number) {
@@ -220,11 +222,11 @@ function deleteComponent(i: string) {
   const index = componentList.findIndex(function (item) {
     return item.i == i
   })
-  if (index > -1) {
-    componentList.splice(index, 1)
-  }
   if (chosenComponent.value == index) {
     chosenComponent.value = 0
+  }
+  if (index > -1) {
+    componentList.splice(index, 1)
   }
 }
 
@@ -238,6 +240,16 @@ function chooseComponent(i: string) {
 //预览手册
 function toManualPreview() {
   museschoolStore.componentList = componentList
+  museschoolStore.designZoneWidth = (designZone.value as unknown as HTMLElement).getBoundingClientRect().width
+  museschoolStore.exportManual = false
+  router.push({ name: "manual-preview" })
+}
+
+//导出手册
+function exportManual() {
+  museschoolStore.componentList = componentList
+  museschoolStore.designZoneWidth = (designZone.value as unknown as HTMLElement).getBoundingClientRect().width
+  museschoolStore.exportManual = true
   router.push({ name: "manual-preview" })
 }
 </script>
@@ -250,10 +262,14 @@ function toManualPreview() {
         <span>Museschool</span>
       </div>
       <!--      <div>undo-redo</div>-->
-      <div class="title">{{ title }}</div>
+      <div class="title" @click="changeTitle">{{ title }}</div>
+      <div v-if="changingTitle" class="titleForm">
+        <el-input v-model="title" :placeholder="title" style="width: 70%" />
+        <el-button color="#2565F1" @click="changeTitle">修改</el-button>
+      </div>
       <div class="show-export">
         <el-button color="#2565F1" icon="Monitor" @click="toManualPreview">预览</el-button>
-        <el-button color="#FFFFFF" icon="Download">导出</el-button>
+        <el-button color="#FFFFFF" icon="Download" @click="exportManual">导出</el-button>
       </div>
     </div>
     <div class="main">
@@ -276,7 +292,6 @@ function toManualPreview() {
       </div>
       <div ref="designZone" class="design-zone">
         <grid-layout
-          ref="gridlayout"
           :col-num="colNum"
           :layout="componentList"
           :margin="[0, 0]"
@@ -375,7 +390,7 @@ function toManualPreview() {
     display: flex;
     flex-direction: row;
     align-content: center;
-    justify-content: center;
+    justify-content: space-between;
     background: linear-gradient(270deg, rgba(121, 162, 254, 1), rgba(37, 101, 241, 1));
     box-shadow: 0 5px 6px rgba(0, 0, 0, 0.17);
 
@@ -387,7 +402,7 @@ function toManualPreview() {
       color: #ffffff;
       font-size: 29px;
       font-weight: bold;
-      margin-right: 30%;
+      margin-left: 5%;
 
       img {
         height: 80%;
@@ -403,11 +418,27 @@ function toManualPreview() {
       font-weight: bold;
     }
 
+    .titleForm {
+      position: absolute;
+      top: 1%;
+      left: 0;
+      right: 0;
+      margin: 0 auto;
+      width: 30%;
+      height: 6%;
+      background: white;
+      border-radius: 5px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-around;
+    }
+
     .show-export {
       display: flex;
       flex-direction: row;
       align-items: center;
-      margin-left: 30%;
+      margin-right: 5%;
     }
   }
 
