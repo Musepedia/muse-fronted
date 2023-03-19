@@ -1,6 +1,7 @@
 # Git 会忽略的文件
 
 .DS_Store
+TODO.md
 node_modules
 dist
 dist-ssr
