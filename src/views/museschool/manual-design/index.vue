@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import GeneralComponent from "@/views/museschool/components/generalComponent.vue"
-import { onMounted, reactive, ref } from "vue"
+import { onMounted, reactive, ref, watch } from "vue"
 import { useRouter } from "vue-router"
 import { Component } from "museschool"
 import { useMuseschoolStore } from "@/store/modules/museschool"
@@ -9,32 +9,61 @@ const router = useRouter()
 
 const museschoolStore = useMuseschoolStore()
 
+//组件引用
 const gridlayout = ref(null)
 const designZone = ref(null)
 
-const title = ref("研学手册标题")
-const chosenComponent = ref("")
+//gridlayout列数，行高
+const colNum = ref(50)
+const rowHeight = ref(10)
+
+const title = ref("研学手册标题") //研学组件标题
+const chosenComponent = ref(-1) //当前选择的组件index
+const editComponent = reactive([false, false]) //右侧编辑区域显示内容，index对应原型组件列表，例如若[1]为ture，右侧显示图片组件的编辑区域
+
+//表单绑定，通过watch监视修改componentList中的对应部分
+const textContent = ref("")
+const fontSize = ref(16)
+const fontWeightOptions = reactive([
+  { value: "bold", label: "Bold" },
+  { value: "bolder", label: "Bolder" },
+  { value: "lighter", label: "Lighter" },
+  {
+    value: "normal",
+    label: "normal"
+  }
+])
+const fontWeight = ref("")
+const fontColor = ref("#000000")
+const backgroundColor = ref("#FFFFFF")
+const imgURL = ref("")
+
+const mouseXY = { x: 0, y: 0 } //监测鼠标位置
+
+//添加组件应修改
+//1.generalComponent
+//2.prototypeComponentList原型组件列表
+//3.该组件的右侧编辑区域（html&表单绑定）
+//4.选择组件变化监听中的switch
+//5.监听表单变化
+//6.添加组件函数中的switch
 
 //原型组件列表
 const prototypeComponentList = reactive([
   {
     i: "-1",
     type: "0",
-    componentProps: { content: "文本组件", background: "white" }
+    componentProps: { content: "文本组件", background: "#ffffff" }
   },
   {
     i: "-2",
     type: "1",
     componentProps: {
       url: "https://northpicture.oss-cn-shanghai.aliyuncs.com/img/202302202247827.png",
-      background: "white"
+      background: "#ffffff"
     }
   }
 ])
-
-//gridlayout列数，行高
-const colNum = ref(50)
-const rowHeight = ref(10)
 
 //组件列表
 const componentList: Component[] = reactive([
@@ -51,7 +80,7 @@ const componentList: Component[] = reactive([
     type: "0",
     componentProps: {
       content: "文本内容",
-      fontSize: "50px",
+      fontSize: "50",
       fontWeight: "bold",
       color: "red",
       background: "#fffaaa"
@@ -74,13 +103,6 @@ const componentList: Component[] = reactive([
   }
 ])
 
-const changeComponent = () => {
-  componentList[0].componentProps!.content = "asdasdasd"
-}
-
-//监测鼠标位置
-const mouseXY = { x: 0, y: 0 }
-
 onMounted(() => {
   //添加鼠标位置监听器
   document.addEventListener(
@@ -93,7 +115,53 @@ onMounted(() => {
   )
 })
 
-function dragend(index: Number) {
+//监听选择组件变化
+watch(chosenComponent, async (newChosenComponent, oldChosenComponent) => {
+  //更改右侧编辑区域显示内容
+  if (oldChosenComponent != -1) {
+    editComponent[parseInt(componentList[oldChosenComponent].type)] = false
+  }
+  editComponent[parseInt(componentList[newChosenComponent].type)] = true
+  console.log(editComponent)
+  //修改表单placeholder
+  switch (componentList[newChosenComponent].type) {
+    case "0":
+      textContent.value = componentList[newChosenComponent].componentProps?.content || ""
+      fontSize.value = parseInt(componentList[newChosenComponent].componentProps?.fontSize || "16")
+      fontWeight.value = componentList[newChosenComponent].componentProps?.fontWeight || "normal"
+      fontColor.value = componentList[newChosenComponent].componentProps?.color || "#000000"
+      backgroundColor.value = componentList[newChosenComponent].componentProps?.background || "#ffffff"
+      break
+    case "1":
+      imgURL.value = componentList[newChosenComponent].componentProps?.url || ""
+      backgroundColor.value = componentList[newChosenComponent].componentProps?.background || "#ffffff"
+      break
+  }
+})
+
+//监听表单变化
+watch(textContent, async (newTextContent) => {
+  componentList[chosenComponent.value].componentProps!.content = newTextContent
+})
+watch(fontSize, async (newFontSize) => {
+  componentList[chosenComponent.value].componentProps!.fontSize = newFontSize.toString()
+  console.log(componentList[chosenComponent.value].componentProps!.fontSize)
+})
+watch(fontWeight, async (newFontWeight) => {
+  componentList[chosenComponent.value].componentProps!.fontWeight = newFontWeight
+})
+watch(fontColor, async (newFontColor) => {
+  componentList[chosenComponent.value].componentProps!.color = newFontColor
+})
+watch(backgroundColor, async (newBackgroundColor) => {
+  componentList[chosenComponent.value].componentProps!.background = newBackgroundColor
+})
+watch(imgURL, async (newImgURL) => {
+  componentList[chosenComponent.value].componentProps!.url = newImgURL
+})
+
+//拖拽添加组件
+function dragend(index: number) {
   const parentRect = (designZone.value as unknown as HTMLElement).getBoundingClientRect()
 
   if (
@@ -107,23 +175,23 @@ function dragend(index: Number) {
       case 0:
         componentProps = {
           content: "文本内容",
-          fontSize: "",
-          fontWeight: "",
-          color: "",
-          background: ""
+          fontSize: "16",
+          fontWeight: "normal",
+          color: "#000000",
+          background: "#ffffff"
         }
         break
       case 1:
         componentProps = {
           url: "https://northpicture.oss-cn-shanghai.aliyuncs.com/img/202302202247827.png",
-          background: ""
+          background: "#ffffff"
         }
         break
     }
 
     let i: string
     if (componentList.length > 0) {
-      i = (Number(componentList[componentList.length - 1].i) + 1).toString()
+      i = (parseInt(componentList[componentList.length - 1].i) + 1).toString()
     } else {
       i = "1"
     }
@@ -141,7 +209,7 @@ function dragend(index: Number) {
       type: index.toString(),
       componentProps: componentProps
     }
-    chosenComponent.value = component.i
+    chosenComponent.value = componentList.length
     componentList.push(component)
   }
 }
@@ -155,14 +223,16 @@ function deleteComponent(i: string) {
   if (index > -1) {
     componentList.splice(index, 1)
   }
-  if (chosenComponent.value == i) {
-    chosenComponent.value = ""
+  if (chosenComponent.value == index) {
+    chosenComponent.value = 0
   }
 }
 
 //选择组件
 function chooseComponent(i: string) {
-  chosenComponent.value = i
+  chosenComponent.value = componentList.findIndex(function (item) {
+    return item.i == i
+  })
 }
 
 //预览手册
@@ -183,7 +253,7 @@ function toManualPreview() {
       <div class="title">{{ title }}</div>
       <div class="show-export">
         <el-button color="#2565F1" icon="Monitor" @click="toManualPreview">预览</el-button>
-        <el-button color="#FFFFFF" icon="Download" @click="changeComponent">导出</el-button>
+        <el-button color="#FFFFFF" icon="Download">导出</el-button>
       </div>
     </div>
     <div class="main">
@@ -241,7 +311,50 @@ function toManualPreview() {
           </grid-item>
         </grid-layout>
       </div>
-      <div class="props-modification">修改参数</div>
+      <div class="props-editor">
+        <div v-if="editComponent[0]" class="editor text-editor">
+          <div class="editor-form">
+            <span>文本内容：</span>
+          </div>
+          <div class="editor-form">
+            <el-input v-model="textContent" :placeholder="textContent" autosize type="textarea" />
+          </div>
+          <div class="editor-form">
+            <el-input-number
+              v-model="fontSize"
+              :placeholder="fontSize.toString()"
+              :step-strictly="true"
+              controls-position="right"
+              style="margin-right: 5%"
+            />
+            <el-select v-model="fontWeight" :placeholder="fontWeight">
+              <el-option v-for="item in fontWeightOptions" :key="item.value" :label="item.label" :value="item.value" />
+            </el-select>
+          </div>
+          <div class="editor-form">
+            <div>
+              <span>文本颜色：</span>
+              <el-color-picker v-model="fontColor" show-alpha />
+            </div>
+            <div>
+              <span>背景颜色：</span>
+              <el-color-picker v-model="backgroundColor" show-alpha />
+            </div>
+          </div>
+        </div>
+        <div v-if="editComponent[1]" class="editor">
+          <div class="editor-form">
+            <span>URL：</span>
+            <el-input v-model="imgURL" :placeholder="textContent" />
+          </div>
+          <div class="editor-form">
+            <div>
+              <span>背景颜色：</span>
+              <el-color-picker v-model="backgroundColor" show-alpha />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -330,11 +443,28 @@ function toManualPreview() {
       overflow-y: scroll;
     }
 
-    .props-modification {
+    .props-editor {
       width: 18%;
       height: 100%;
       background: #ffffff;
       overflow-y: scroll;
+
+      .editor {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: #b9b9b9;
+
+        .editor-form {
+          width: 80%;
+          margin-top: 5%;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+        }
+      }
     }
   }
 }

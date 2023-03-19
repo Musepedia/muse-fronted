@@ -6,6 +6,10 @@ import { Close } from "@element-plus/icons-vue"
 
 const props = defineProps(["showDelete", "i", "type", "componentProps"])
 
+//添加组件应修改
+//1.componentList 已开发的组件列表
+//2.import
+
 //已开发的组件列表，此数组的索引即为组件的type字段
 const componentList = markRaw([museText, museImage])
 const currentComponent = computed(() => {

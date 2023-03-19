@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, ref } from "vue"
+import { onMounted, ref, watch } from "vue"
 
 //图片组件参数格式
 // componentProps: { url: "", background: ""}
@@ -9,6 +9,15 @@ const props = defineProps(["i", "componentProps"])
 const componentStyle = ref("")
 
 onMounted(() => {
+  //解析componentProps
+  if (props.componentProps.background != null) {
+    componentStyle.value = componentStyle.value + "background:" + props.componentProps.background + ";"
+  }
+})
+
+//监听props变化
+watch(props, async () => {
+  componentStyle.value = ""
   //解析componentProps
   if (props.componentProps.background != null) {
     componentStyle.value = componentStyle.value + "background:" + props.componentProps.background + ";"
