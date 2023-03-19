@@ -109,6 +109,22 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: {
           title: "数据分析"
         }
+      },
+      {
+        path: "menu4",
+        component: () => import("@/views/menu/menu4/index.vue"),
+        name: "Menu4",
+        meta: {
+          title: "提问管理"
+        }
+      },
+      {
+        path: "menu5",
+        component: () => import("@/views/menu/menu5/index.vue"),
+        name: "Menu5",
+        meta: {
+          title: "文创管理"
+        }
       }
     ]
   },

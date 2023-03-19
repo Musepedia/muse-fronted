@@ -86,6 +86,7 @@ const resetForm = () => {
   formData.phone = ""
   formData.role = ""
   formData.institution = ""
+  museumChosen.value = undefined
 }
 //#endregion
 

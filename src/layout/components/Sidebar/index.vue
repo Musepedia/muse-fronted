@@ -45,7 +45,7 @@ const isCollapse = computed(() => {
         :collapse="isCollapse"
         :background-color="v3SidebarMenuBgColor"
         :active-text-color="v3SidebarMenuActiveTextColor"
-        :unique-opened="false"
+        :unique-opened="true"
         :collapse-transition="false"
         mode="vertical"
       >

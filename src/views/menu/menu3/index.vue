@@ -172,7 +172,7 @@ export default defineComponent({
     }
 
     const handleChoseMuseumClose = () => {
-      if (userStore.museumID === null && museumChosen.value === null) {
+      if (userStore.museumID === null && museumChosen.value === undefined) {
         ElMessage.warning("请先选择一个博物馆")
       } else {
         choseMuseumDialogVisible.value = false

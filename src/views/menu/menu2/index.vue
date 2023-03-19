@@ -78,7 +78,7 @@ const getMuseumList = () => {
 }
 
 const handleChoseMuseumClose = () => {
-  if (userStore.museumID === null && museumChosen.value === null) {
+  if (userStore.museumID === null && museumChosen.value === undefined) {
     ElMessage.warning("请先选择一个博物馆")
   } else {
     choseMuseumDialogVisible.value = false
@@ -704,6 +704,11 @@ watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSi
     --el-button-border-color: #1f1f1f;
     --el-button-hover-text-color: #f5f3f3;
   }
+}
+
+:deep(.el-card) {
+  border-radius: 10px;
+  background-color: #fafafa;
 }
 .image-block {
   // padding: 30px 0;
