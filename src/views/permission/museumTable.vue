@@ -393,6 +393,7 @@ const getMuseumList = () => {
     .then((res: any) => {
       paginationData.total = res.data.data.total
       museumList.value = res.data.data.data
+      console.log(res.data)
     })
     .catch(() => {
       museumList.value = []
@@ -422,6 +423,35 @@ const getMuseumName = (row: any) => {
 }
 
 const searchFormRef = ref<FormInstance | null>(null)
+const shortcuts = [
+  {
+    text: "过去一周",
+    value: () => {
+      const end = new Date()
+      const start = new Date()
+      start.setTime(start.getTime() - 3600 * 1000 * 24 * 7)
+      return [start, end]
+    }
+  },
+  {
+    text: "过去一个月",
+    value: () => {
+      const end = new Date()
+      const start = new Date()
+      start.setTime(start.getTime() - 3600 * 1000 * 24 * 30)
+      return [start, end]
+    }
+  },
+  {
+    text: "过去三个月",
+    value: () => {
+      const end = new Date()
+      const start = new Date()
+      start.setTime(start.getTime() - 3600 * 1000 * 24 * 90)
+      return [start, end]
+    }
+  }
+]
 const searchData = reactive({
   name: "",
   order: "",
@@ -457,8 +487,16 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getMuse
         <el-form-item prop="name" label="博物馆名">
           <el-input v-model="searchData.name" placeholder="请输入" />
         </el-form-item>
-        <el-form-item prop="createTime" label="创建时间">
+        <el-form-item prop="createTime" label="创建时间" class="datepicker">
           <el-input v-model="searchData.createTime[0]" placeholder="请输入" />
+          <!-- <el-date-picker
+            v-model="searchData.createTime"
+            type="datetimerange"
+            :shortcuts="shortcuts"
+            range-separator="To"
+            start-placeholder="Start date"
+            end-placeholder="End date"
+          /> -->
         </el-form-item>
         <el-form-item prop="updateTime" label="更新时间">
           <el-input v-model="searchData.updateTime[0]" placeholder="请输入" />
@@ -766,5 +804,15 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getMuse
   border: 1px solid red;
   width: 300px;
   height: 30px;
+}
+
+.datepicker {
+  padding: 30px 0;
+  text-align: center;
+  // border-right: solid 1px var(--el-border-color);
+  flex: 1;
+}
+.datepicker:last-child {
+  border-right: none;
 }
 </style>
