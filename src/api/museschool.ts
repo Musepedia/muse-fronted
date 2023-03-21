@@ -1,4 +1,4 @@
-import { request } from "@/utils/service"
+import { request } from "@/utils/museschoolService"
 
 export interface saveLocationData {
   name: string
@@ -17,7 +17,7 @@ export interface saveLocationData {
 //保存布局
 export function saveLocation(data: saveLocationData) {
   return request({
-    url: "school/api/saveLocation",
+    url: "/saveLocation",
     method: "POST",
     data
   })

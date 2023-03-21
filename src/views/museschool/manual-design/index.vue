@@ -5,6 +5,8 @@ import { useRouter } from "vue-router"
 import { Component } from "museschool"
 import { useMuseschoolStore } from "@/store/modules/museschool"
 import { getComponentList, setComponentList } from "@/utils/cache/localStorage"
+import { saveLocation } from "@/api/museschool"
+import { ElMessage } from "element-plus"
 
 const router = useRouter()
 
@@ -330,6 +332,26 @@ function exportManual() {
   museschoolStore.exportManual = true
   router.push({ name: "manual-preview" })
 }
+
+//上传手册
+function uploadManual() {
+  //下面是上传单个组件的代码，后续要删除
+  saveLocation({
+    name: "test",
+    x: 1,
+    y: 1,
+    width: 1,
+    minWidth: 1,
+    maxWidth: 1,
+    height: 1,
+    minHeight: 1,
+    maxHeight: 1,
+    typeId: 1,
+    content: "string"
+  }).then(() => {
+    ElMessage.success("success")
+  })
+}
 </script>
 
 <template>
@@ -348,6 +370,7 @@ function exportManual() {
       <div class="show-export">
         <el-button color="#2565F1" icon="Monitor" @click="toManualPreview">预览</el-button>
         <el-button color="#FFFFFF" icon="Download" @click="exportManual">导出</el-button>
+        <el-button color="#2565F1" icon="Upload" @click="uploadManual">上传</el-button>
       </div>
     </div>
     <div class="main">
