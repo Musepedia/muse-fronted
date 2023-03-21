@@ -20,13 +20,23 @@ const rowHeight = ref(10)
 const chosenComponent = ref(-1) //当前选择的组件index
 
 //表单绑定，通过watch监视修改componentList中的对应部分
+const x = ref(1)
+const y = ref(1)
+const w = ref(10)
+const h = ref(10)
+const minW = ref(1)
+const maxW = ref(20)
+const minH = ref(1)
+const maxH = ref(20)
 const showTitleEditor = ref(false)
 const title = ref("研学手册标题")
 const showTextContentEditor = ref(false)
 const textContent = ref("")
+const showImgURLEditor = ref(false)
+const imgURL = ref("")
 const showFontSizeEditor = ref(false)
 const fontSize = ref(16)
-const showfontWeightEditor = ref(false)
+const showFontWeightEditor = ref(false)
 const fontWeightOptions = reactive([
   { value: "bold", label: "Bold" },
   { value: "bolder", label: "Bolder" },
@@ -41,8 +51,6 @@ const showFontColorEditor = ref(false)
 const fontColor = ref("#000000")
 const showBackgroundColorEditor = ref(false)
 const backgroundColor = ref("#FFFFFF")
-const showImgURLEditor = ref(false)
-const imgURL = ref("")
 
 const mouseXY = { x: 0, y: 0 } //监测鼠标位置
 
@@ -85,30 +93,46 @@ onMounted(() => {
     }
   }
 
+  //计算行高
+  resizeHandler()
+
+  //添加页面窗口大小监听器
+  window.addEventListener("resize", resizeHandler)
   //添加鼠标位置监听器
-  document.addEventListener("dragover", handleDragover)
+  document.addEventListener("dragover", dragoverHandler)
   //添加unload监听器，持续化存储componentList
-  window.addEventListener("beforeunload", handleBeforeunload)
+  window.addEventListener("beforeunload", beforeunloadHandler)
 })
 
 onUnmounted(() => {
   //持续化存储componentList
   setComponentList(componentList)
+
+  //移除页面窗口大小监听器
+  window.removeEventListener("resize", resizeHandler)
   //移除鼠标位置监听器
-  document.removeEventListener("dragover", handleDragover)
+  document.removeEventListener("dragover", dragoverHandler)
   //移除unload监听器
-  window.removeEventListener("beforeunload", handleBeforeunload)
+  window.removeEventListener("beforeunload", beforeunloadHandler)
 })
 
 //监听选择组件变化
 watch(chosenComponent, (newChosenComponent) => {
   showTextContentEditor.value = false
   showFontSizeEditor.value = false
-  showfontWeightEditor.value = false
+  showFontWeightEditor.value = false
   showFontColorEditor.value = false
   showImgURLEditor.value = false
   showBackgroundColorEditor.value = false
   if (newChosenComponent != -1) {
+    x.value = componentList[newChosenComponent].x
+    y.value = componentList[newChosenComponent].y
+    w.value = componentList[newChosenComponent].w
+    h.value = componentList[newChosenComponent].h
+    minW.value = componentList[newChosenComponent].minW
+    maxW.value = componentList[newChosenComponent].maxW
+    minH.value = componentList[newChosenComponent].minH
+    maxH.value = componentList[newChosenComponent].maxH
     //更改右侧编辑区域显示内容,修改表单placeholder
     switch (componentList[newChosenComponent].type) {
       case 0:
@@ -116,7 +140,7 @@ watch(chosenComponent, (newChosenComponent) => {
         textContent.value = componentList[newChosenComponent].componentProps?.content || ""
         showFontSizeEditor.value = true
         fontSize.value = parseInt(componentList[newChosenComponent].componentProps?.fontSize || "16")
-        showfontWeightEditor.value = true
+        showFontWeightEditor.value = true
         fontWeight.value = componentList[newChosenComponent].componentProps?.fontWeight || "normal"
         showFontColorEditor.value = true
         fontColor.value = componentList[newChosenComponent].componentProps?.color || "#000000"
@@ -152,16 +176,57 @@ watch(backgroundColor, (newBackgroundColor) => {
 watch(imgURL, (newImgURL) => {
   componentList[chosenComponent.value].componentProps!.url = newImgURL
 })
+watch(x, (newX) => {
+  componentList[chosenComponent.value].x = newX
+})
+watch(y, (newY) => {
+  componentList[chosenComponent.value].y = newY
+})
+watch(w, (newW) => {
+  componentList[chosenComponent.value].w = newW
+})
+watch(h, (newH) => {
+  componentList[chosenComponent.value].h = newH
+})
+watch(minW, (newMinW) => {
+  componentList[chosenComponent.value].minW = newMinW
+})
+watch(maxW, (newMaxW) => {
+  componentList[chosenComponent.value].maxW = newMaxW
+})
+watch(minH, (newMinH) => {
+  componentList[chosenComponent.value].minH = newMinH
+})
+watch(maxH, (newMaxH) => {
+  componentList[chosenComponent.value].maxH = newMaxH
+})
 
 //unload之前持续化存储componentList
-function handleBeforeunload() {
+function beforeunloadHandler() {
   setComponentList(componentList)
 }
 
 //鼠标拖动组件时获取鼠标位置
-function handleDragover(e: { clientX: number; clientY: number }) {
+function dragoverHandler(e: { clientX: number; clientY: number }) {
   mouseXY.x = e.clientX
   mouseXY.y = e.clientY
+}
+
+//监听页面窗口大小变化，重新计算行高
+function resizeHandler() {
+  rowHeight.value = (designZone.value as unknown as HTMLElement).getBoundingClientRect().width / colNum.value
+}
+
+//更改组件位置时同步修改表单值
+function componentMoveHandler(i: string, newX: number, newY: number) {
+  x.value = newX
+  y.value = newY
+}
+
+//更改组件大小时同步修改表单值
+function componentResizeHandler(i: string, newW: number, newH: number) {
+  w.value = newW
+  h.value = newH
 }
 
 //修改标题
@@ -173,7 +238,7 @@ function changeTitle() {
 }
 
 //拖拽添加组件
-function dragend(index: number) {
+function addComponent(index: number) {
   const parentRect = (designZone.value as unknown as HTMLElement).getBoundingClientRect()
 
   if (
@@ -219,7 +284,7 @@ function dragend(index: number) {
       maxW: 20,
       maxH: 20,
       type: index,
-      componentProps: componentProps
+      componentProps: componentProps!
     }
     chosenComponent.value = componentList.length
     componentList.push(component)
@@ -255,7 +320,6 @@ function chooseComponent(i: string) {
 //预览手册
 function toManualPreview() {
   museschoolStore.componentList = componentList
-  museschoolStore.designZoneWidth = (designZone.value as unknown as HTMLElement).getBoundingClientRect().width
   museschoolStore.exportManual = false
   router.push({ name: "manual-preview" })
 }
@@ -263,7 +327,6 @@ function toManualPreview() {
 //导出手册
 function exportManual() {
   museschoolStore.componentList = componentList
-  museschoolStore.designZoneWidth = (designZone.value as unknown as HTMLElement).getBoundingClientRect().width
   museschoolStore.exportManual = true
   router.push({ name: "manual-preview" })
 }
@@ -294,7 +357,7 @@ function exportManual() {
           :key="item.i"
           class="droppable-element"
           draggable="true"
-          @dragend="dragend(index)"
+          @dragend="addComponent(index)"
         >
           <general-component
             :component-props="item.componentProps"
@@ -328,6 +391,8 @@ function exportManual() {
             :x="item.x"
             :y="item.y"
             class="grid-item"
+            @move="componentMoveHandler"
+            @resize="componentResizeHandler"
           >
             <general-component
               :component-props="item.componentProps"
@@ -342,36 +407,143 @@ function exportManual() {
         </grid-layout>
       </div>
       <div class="props-editor">
+        <div v-if="componentList.length !== 0" class="editor-form">
+          <span>位置 - 大小</span>
+        </div>
+        <div v-if="componentList.length !== 0" class="editor-form">
+          <div class="half-editor-form">
+            <div class="form-label">x</div>
+            <el-input-number
+              v-model="x"
+              :max="colNum - w"
+              :min="0"
+              :placeholder="x.toString()"
+              :step-strictly="true"
+              class="input-number"
+              controls-position="right"
+            />
+          </div>
+          <div class="half-editor-form">
+            <div class="form-label">y</div>
+            <el-input-number
+              v-model="y"
+              :min="0"
+              :placeholder="y.toString()"
+              :step-strictly="true"
+              class="input-number"
+              controls-position="right"
+            />
+          </div>
+        </div>
+        <div v-if="componentList.length !== 0" class="editor-form">
+          <div class="half-editor-form">
+            <div class="form-label">宽</div>
+            <el-input-number
+              v-model="w"
+              :max="maxW > colNum - x ? colNum - x : maxW"
+              :min="minW"
+              :placeholder="w.toString()"
+              :step-strictly="true"
+              class="input-number"
+              controls-position="right"
+            />
+          </div>
+          <div class="half-editor-form">
+            <div class="form-label">高</div>
+            <el-input-number
+              v-model="h"
+              :max="maxH"
+              :min="minH"
+              :placeholder="h.toString()"
+              :step-strictly="true"
+              class="input-number"
+              controls-position="right"
+            />
+          </div>
+        </div>
+        <div v-if="componentList.length !== 0" class="editor-form" style="font-size: 14px">
+          <div class="half-editor-form">
+            <div class="form-label">最小<br />宽度</div>
+            <el-input-number
+              v-model="minW"
+              :max="w"
+              :min="1"
+              :placeholder="minW.toString()"
+              :step-strictly="true"
+              class="input-number"
+              controls-position="right"
+            />
+          </div>
+          <div class="half-editor-form">
+            <div class="form-label">最大<br />宽度</div>
+            <el-input-number
+              v-model="maxW"
+              :max="colNum"
+              :min="w"
+              :placeholder="maxW.toString()"
+              :step-strictly="true"
+              class="input-number"
+              controls-position="right"
+            />
+          </div>
+        </div>
+        <div v-if="componentList.length !== 0" class="editor-form" style="font-size: 14px">
+          <div class="half-editor-form">
+            <div class="form-label">最小<br />高度</div>
+            <el-input-number
+              v-model="minH"
+              :max="h"
+              :min="1"
+              :placeholder="minH.toString()"
+              :step-strictly="true"
+              class="input-number"
+              controls-position="right"
+            />
+          </div>
+          <div class="half-editor-form">
+            <div class="form-label">最大<br />高度</div>
+            <el-input-number
+              v-model="maxH"
+              :min="h"
+              :placeholder="maxH.toString()"
+              :step-strictly="true"
+              class="input-number"
+              controls-position="right"
+            />
+          </div>
+        </div>
         <div v-if="showTextContentEditor" class="editor-form">
-          <span>文本内容：</span>
+          <span>文本内容</span>
         </div>
         <div v-if="showTextContentEditor" class="editor-form">
           <el-input v-model="textContent" :placeholder="textContent" autosize type="textarea" />
         </div>
         <div v-if="showImgURLEditor" class="editor-form">
-          <span>URL：</span>
+          <span>URL </span>
           <el-input v-model="imgURL" :placeholder="textContent" />
         </div>
-        <div v-if="showFontSizeEditor || showfontWeightEditor" class="editor-form">
+        <div v-if="showFontSizeEditor || showFontWeightEditor" class="editor-form">
           <el-input-number
             v-if="showFontSizeEditor"
             v-model="fontSize"
+            :max="300"
+            :min="12"
             :placeholder="fontSize.toString()"
             :step-strictly="true"
             controls-position="right"
             style="margin-right: 5%"
           />
-          <el-select v-if="showfontWeightEditor" v-model="fontWeight" :placeholder="fontWeight">
+          <el-select v-if="showFontWeightEditor" v-model="fontWeight" :placeholder="fontWeight">
             <el-option v-for="item in fontWeightOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </div>
         <div v-if="showFontColorEditor || showBackgroundColorEditor" class="editor-form">
           <div v-if="showFontColorEditor">
-            <span>文本颜色：</span>
+            <span>文本颜色 </span>
             <el-color-picker v-model="fontColor" show-alpha />
           </div>
           <div v-if="showBackgroundColorEditor">
-            <span>背景颜色：</span>
+            <span>背景颜色 </span>
             <el-color-picker v-model="backgroundColor" show-alpha />
           </div>
         </div>
@@ -489,6 +661,7 @@ function exportManual() {
       flex-direction: column;
       align-items: center;
       color: #b9b9b9;
+      font-size: 15px;
 
       .editor-form {
         width: 80%;
@@ -497,6 +670,26 @@ function exportManual() {
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
+
+        .half-editor-form {
+          width: 46%;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+
+          .form-label {
+            width: 25%;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+          }
+
+          .input-number {
+            width: 70%;
+          }
+        }
       }
     }
   }

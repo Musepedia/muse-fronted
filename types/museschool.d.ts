@@ -10,13 +10,13 @@ declare module "museschool" {
     maxW: number
     maxH: number
     type: number
-    componentProps?: {
+    componentProps: {
       content?: string
       fontSize?: string
       fontWeight?: string
       color?: string
       background?: string
       url?: string
-    } | null
+    }
   }
 }

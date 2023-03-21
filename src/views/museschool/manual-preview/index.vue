@@ -27,11 +27,10 @@ onMounted(() => {
   }
 
   //监听页面窗口大小变化
-  window.addEventListener("resize", handleResize)
+  window.addEventListener("resize", resizeHandler)
 
   //计算行高
-  rowHeight.value =
-    10 * ((manual.value as unknown as HTMLElement).getBoundingClientRect().width / museschoolStore.designZoneWidth)
+  resizeHandler()
 
   //直接导出
   if (museschoolStore.exportManual) {
@@ -43,13 +42,12 @@ onMounted(() => {
 
 onUnmounted(() => {
   //移除事件监听器
-  window.removeEventListener("resize", handleResize)
+  window.removeEventListener("resize", resizeHandler)
 })
 
 //监听页面窗口大小变化，重新计算行高
-function handleResize() {
-  rowHeight.value =
-    10 * ((manual.value as unknown as HTMLElement).getBoundingClientRect().width / museschoolStore.designZoneWidth)
+function resizeHandler() {
+  rowHeight.value = (manual.value as unknown as HTMLElement).getBoundingClientRect().width / colNum.value
 }
 
 //导出手册
