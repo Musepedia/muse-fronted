@@ -16,6 +16,7 @@ interface IAddZoneApi {
   name: string
   description: string
   imageUrl: string
+  imageList: string[]
   museumId: number
   id?: number
 }

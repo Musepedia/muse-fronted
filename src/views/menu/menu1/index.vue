@@ -124,12 +124,13 @@ const file = ref<any>()
 const fileUrl = ref("")
 const fileList = ref<any[]>([])
 const imageUrl = ref("")
+const imageList = ref<any[]>([])
 const beforeUpload = (_file: any) => {
   fileUrl.value = URL.createObjectURL(_file)
   return false
 }
 const handlePictureExceed = (_files: any, _fileList: any) => {
-  ElMessage.warning("很抱歉,只能上传1张图片")
+  ElMessage.warning("很抱歉,只能上传5张图片")
 }
 const handlePictureChange = (_file: any, _fileList: any) => {
   if (_file) {
@@ -141,13 +142,20 @@ const handlePictureChange = (_file: any, _fileList: any) => {
     if (size > 20) {
       ElMessage.warning("文件大小请不要超过20MB")
     }
-    file.value = _file.raw
+    // file.value = _file.raw
+    fileList.value.push(_file.raw)
     //fileList.value = _fileList
     // console.log(fileList.value)
   }
 }
 const handlePictureRemove = (_file: any, _fileList: any) => {
-  _fileList.value = []
+  _fileList.forEach(function (item: any) {
+    if (item === _file) {
+      _fileList.splice(_fileList.indexOf(item), 1)
+    }
+  })
+  fileList.value = _fileList
+  zoneForm.imageList = _fileList
 }
 const previewPicDialog = ref(false)
 const previewImage = ref("")
@@ -160,7 +168,9 @@ const resetForm = () => {
   zoneForm.name = ""
   zoneForm.description = ""
   zoneForm.imageUrl = ""
-  file.value = undefined
+  zoneForm.imageList = []
+  // file.value = undefined
+  fileList.value = []
 }
 
 const handleClose = () => {
@@ -168,28 +178,69 @@ const handleClose = () => {
   resetForm()
 }
 
+// const handleUpload = () => {
+//   return new Promise((resolve, reject) => {
+//     // console.log(file.value)
+//     if (file.value === undefined) {
+//       imageUrl.value = zoneForm.imageUrl
+//       resolve(true)
+//     } else {
+//       const param = new FormData()
+//       param.append("file", file.value)
+//       // console.log(fileList.value)
+//       uploadFile(param)
+//         .then((res) => {
+//           imageUrl.value = res.data.data
+//           // console.log(res)
+//           resolve(true)
+//         })
+//         .catch((error) => {
+//           reject(error)
+//         })
+//     }
+//   })
+// }
+
 const handleUpload = () => {
-  return new Promise((resolve, reject) => {
-    // console.log(file.value)
-    if (file.value === undefined) {
-      imageUrl.value = zoneForm.imageUrl
+  // console.log(fileList.value)
+  const p1 = Promise.resolve(true)
+  const pList = ref<any[]>([])
+  pList.value[0] = p1
+  if (fileList.value.length === 0) {
+    // console.log(fileList.value.length)
+    return new Promise((resolve, reject) => {
+      // console.log(zoneForm.imageList)
+      imageList.value = zoneForm.imageList
       resolve(true)
-    } else {
-      const param = new FormData()
-      param.append("file", file.value)
-      // console.log(fileList.value)
-      uploadFile(param)
-        .then((res) => {
-          imageUrl.value = res.data.data
-          // console.log(res)
+    })
+  } else {
+    fileList.value.forEach(function (item, index) {
+      // await Promise.all(pList.value.slice(0, index + 1))
+      pList.value[index + 1] = new Promise((resolve, reject) => {
+        if (item.url !== undefined) {
+          imageList.value.push(item.url)
           resolve(true)
-        })
-        .catch((error) => {
-          reject(error)
-        })
-    }
-  })
+        } else {
+          const param = new FormData()
+          param.append("file", item)
+          // console.log(fileList.value)
+          uploadFile(param)
+            .then((res) => {
+              imageList.value.push(res.data.data)
+              // console.log(res)
+              resolve(index)
+            })
+            .catch((error) => {
+              reject(error)
+            })
+        }
+      })
+    })
+    return Promise.all(pList.value)
+    //promise.all方法用于将多个promise实例，包装成一个新的promise实例
+  }
 }
+
 const handleUpdate = async () => {
   await handleUpload()
   updateZoneApi({
@@ -197,12 +248,14 @@ const handleUpdate = async () => {
     name: zoneForm.name,
     museumId: (userStore.museumID !== null ? userStore.museumID : museumChosen.value) as number,
     description: zoneForm.description,
-    imageUrl: imageUrl.value
+    imageUrl: imageUrl.value,
+    imageList: imageList.value
   }).then(() => {
     // console.log(res)
     ElMessage.success("修改成功")
     dialogVisible.value = false
     getZoneList()
+    imageList.value = []
   })
 }
 
@@ -212,7 +265,8 @@ const zoneFormRef = ref<FormInstance | null>(null)
 const zoneForm = reactive({
   name: "",
   description: "",
-  imageUrl: ""
+  imageUrl: "",
+  imageList: [] as any[]
 })
 const zoneFormRules: FormRules = reactive({
   name: [{ required: true, trigger: "blur", message: "请输入展区名" }],
@@ -223,6 +277,45 @@ const handleOpenAddZone = () => {
     ElMessage.warning("请先选择一个博物馆")
   } else {
     dialogVisible.value = true
+    fileList.value = []
+  }
+}
+
+const handleAdd = async () => {
+  // 无图新增时
+  // console.log("处理新增时： " + fileList.value)
+  if (fileList.value.length === 0) {
+    addZoneApi({
+      name: zoneForm.name,
+      description: zoneForm.description,
+      museumId: (userStore.museumID !== null ? userStore.museumID : museumChosen.value) as number,
+      imageUrl: "",
+      imageList: []
+    }).then(() => {
+      ElMessage.success("新增成功")
+      dialogVisible.value = false
+      getZoneList()
+      imageList.value = []
+    })
+  } else {
+    // 有图新增时
+    await handleUpload()
+    // console.log("上传图片后的imageList: ")
+    // console.log(imageList.value)
+    zoneForm.imageList = imageList.value
+
+    addZoneApi({
+      name: zoneForm.name,
+      description: zoneForm.description,
+      museumId: (userStore.museumID !== null ? userStore.museumID : museumChosen.value) as number,
+      imageList: imageList.value,
+      imageUrl: imageList.value[0]
+    }).then(() => {
+      ElMessage.success("新增成功")
+      dialogVisible.value = false
+      getZoneList()
+      imageList.value = []
+    })
   }
 }
 
@@ -230,36 +323,7 @@ const handleCreate = () => {
   zoneFormRef.value?.validate((valid: boolean) => {
     if (valid) {
       if (currentUpdateId.value === undefined) {
-        if (file.value === undefined) {
-          addZoneApi({
-            name: zoneForm.name,
-            description: zoneForm.description,
-            museumId: (userStore.museumID !== null ? userStore.museumID : museumChosen.value) as number,
-            imageUrl: ""
-          }).then(() => {
-            ElMessage.success("新增成功")
-            dialogVisible.value = false
-            getZoneList()
-          })
-        } else {
-          const param = new FormData()
-          param.append("file", file.value)
-          uploadFile(param).then((res) => {
-            imageUrl.value = res.data.data
-            zoneForm.imageUrl = res.data.data
-
-            addZoneApi({
-              name: zoneForm.name,
-              description: zoneForm.description,
-              museumId: (userStore.museumID !== null ? userStore.museumID : museumChosen.value) as number,
-              imageUrl: imageUrl.value
-            }).then(() => {
-              ElMessage.success("新增成功")
-              dialogVisible.value = false
-              getZoneList()
-            })
-          })
-        }
+        handleAdd()
       } else {
         handleUpdate()
       }
@@ -277,8 +341,13 @@ const handleUpdateOpen = (item: any) => {
   zoneForm.name = item.name
   zoneForm.description = item.description
   zoneForm.imageUrl = item.imageUrl
+  zoneForm.imageList = item.imageList
 
-  fileList.value.push({ url: item.imageUrl as string })
+  fileList.value = item.imageList.map((i: any) => {
+    return {
+      url: i
+    }
+  })
   dialogVisible.value = true
 }
 
@@ -318,12 +387,14 @@ const handleChange = (item: any) => {
 /** 查看展区详情 */
 const detailDialogVisible = ref(false)
 const imageDetail = ref("")
+const imageListDetail = ref<any[]>([])
 const nameDetail = ref("")
 const descriptionDetail = ref("")
 const enabledDetail = ref(false)
 const handleDetails = (item: any) => {
   detailDialogVisible.value = true
   imageDetail.value = item.imageUrl
+  imageListDetail.value = item.imageList
   nameDetail.value = item.name
   descriptionDetail.value = item.description
   enabledDetail.value = item.enabled
@@ -371,6 +442,12 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getZone
         <el-card style="margin-bottom: 10px" :body-style="{ padding: '0px' }" shadow="hover">
           <div class="image-block">
             <el-image v-if="item.imageUrl !== ''" :src="item.imageUrl" class="image" fit="contain" />
+            <el-image
+              v-else-if="item.imageList.length !== 0 && item.imageList[0] !== ''"
+              :src="item.imageList[0]"
+              class="image"
+              fit="contain"
+            />
             <el-empty v-else :image-size="35" description="暂未上传" />
           </div>
           <div style="padding: 14px">
@@ -428,12 +505,12 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getZone
         <el-form-item prop="description" label="展区描述">
           <el-input type="textarea" v-model="zoneForm.description" placeholder="请输入展区描述" />
         </el-form-item>
-        <el-form-item prop="imageUrl" label="上传展区图片">
+        <el-form-item prop="imageList" label="上传展区图片">
           <el-upload
             class="uploader"
             action="#"
             ref="upload"
-            :limit="1"
+            :limit="5"
             :file-list="fileList"
             list-type="picture-card"
             accept=".jpg,.png,.jpeg,.JPG,.JPEG"
@@ -456,12 +533,22 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getZone
     <!-- 展区详情 组件 -->
     <el-dialog v-model="detailDialogVisible" :title="nameDetail" @close="detailDialogVisible = false">
       <div class="imageCarousel">
-        <el-carousel trigger="click" height="100%">
-          <!-- <el-carousel-item v-for="item in imageList" :key="item">
-            <el-image :src="item.imageUrl" fit="contain" />
-          </el-carousel-item> -->
-          <el-image v-if="imageDetail !== ''" :src="imageDetail" fit="contain" />
-          <el-empty v-else :image-size="35" description="暂未上传" />
+        <el-carousel trigger="click">
+          <el-carousel-item v-if="imageListDetail.length === 0">
+            <el-empty :image-size="35" description="暂未上传" />
+          </el-carousel-item>
+          <el-carousel-item v-else v-for="item in imageListDetail" :key="item">
+            <el-image
+              v-if="imageListDetail.length !== 0 && imageListDetail[0] !== ''"
+              :src="item"
+              fit="contain"
+              class="justify-center"
+              style="width: 100%; height: 100%"
+            />
+            <el-empty v-else :image-size="35" description="暂未上传" />
+          </el-carousel-item>
+          <!-- <el-image v-if="imageDetail !== ''" :src="imageDetail" fit="contain" />
+          <el-empty v-else :image-size="35" description="暂未上传" /> -->
         </el-carousel>
       </div>
       <el-descriptions style="margin-top: 20px" :column="1" border>
@@ -492,7 +579,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getZone
 
 .add-icon-container {
   margin-bottom: 10px;
-  height: 300px;
+  height: 330px;
   display: flex;
   justify-content: center;
   :deep(.el-card__body) {

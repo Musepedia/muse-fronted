@@ -24,7 +24,7 @@ interface IAddExhibitApi {
   label: string
   description: string
   figureUrl: string
-  figureUrlList?: string[]
+  figureUrlList: string[]
   hallId: number
   nextId?: number
   prevId?: number

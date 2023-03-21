@@ -121,7 +121,6 @@ const typeList = reactive([
 const questionList = ref<any[]>([])
 const getQuestionList = () => {
   loading.value = true
-  console.log(searchData.answerType)
   getQuestionListApi({
     current: paginationData.currentPage,
     size: paginationData.pageSize,
@@ -137,7 +136,6 @@ const getQuestionList = () => {
     .then((res: any) => {
       paginationData.total = res.data.data.total
       questionList.value = res.data.data.data
-      // console.log(res.data)
     })
     .catch(() => {
       questionList.value = []
@@ -271,10 +269,6 @@ const handleDetails = (item: any) => {
 const isChangable = ref(false)
 const handleUpdateAnswer = () => {
   isChangable.value = false
-  console.log(currentDetailId.value)
-  console.log(exhibitIdDetail.value)
-  console.log(answerTextDetail.value)
-  console.log(answerTypeDetail.value)
   updateQuestionApi({
     id: currentDetailId.value as number,
     exhibitId: exhibitIdDetail.value as number,
@@ -321,7 +315,6 @@ const getExhibitUpdatedList = () => {
       exhibitionHallId: zoneUpdated.value as number
     })
       .then((res) => {
-        console.log(res)
         exhibitUpdatedList.value = res.data.data.data
       })
       .catch(() => {
@@ -353,10 +346,6 @@ const handleUpdateOpen = (item: any) => {
 const handleCreate = () => {
   questionFormRef.value?.validate((valid: boolean) => {
     if (valid) {
-      // console.log(currentUpdateId.value)
-      // console.log(questionForm.exhibitId)
-      // console.log(questionForm.answerText)
-      // console.log(questionForm.answerType)
       updateQuestionApi({
         id: currentDetailId.value as number,
         exhibitId: exhibitUpdated.value !== undefined ? exhibitUpdated.value : questionForm.exhibitId,
