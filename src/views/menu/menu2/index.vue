@@ -165,20 +165,21 @@ const getExhibitList = () => {
 }
 
 /**
- * 添加/修改展区
+ * 添加/修改展品
  * */
 /** 上传image相关 */
 const file = ref<any>()
 const fileUrl = ref("")
 const fileList = ref<any[]>([])
 const figureUrl = ref("")
+const figureUrlList = ref<any[]>([])
 const beforeUpload = (_file: any) => {
   fileUrl.value = URL.createObjectURL(_file)
   return false
 }
 /** 图片超过限制数量时 */
 const handlePictureExceed = (_files: any, _fileList: any) => {
-  ElMessage.warning("很抱歉,只能上传1张图片")
+  ElMessage.warning("很抱歉,只能上传5张图片")
 }
 /** 更换已选择图片时 */
 const handlePictureChange = (_file: any, _fileList: any) => {
@@ -191,14 +192,21 @@ const handlePictureChange = (_file: any, _fileList: any) => {
     if (size > 20) {
       ElMessage.warning("文件大小请不要超过20MB")
     }
-    file.value = _file.raw
+    // file.value = _file.raw
+    fileList.value.push(_file.raw)
     //fileList.value = _fileList
     // console.log(fileList.value)
   }
 }
 /** 删除已选择的图片时 */
 const handlePictureRemove = (_file: any, _fileList: any) => {
-  _fileList.value = []
+  _fileList.forEach(function (item: any) {
+    if (item === _file) {
+      _fileList.splice(_fileList.indexOf(item), 1)
+    }
+  })
+  fileList.value = _fileList
+  exhibitForm.figureUrlList = _fileList
 }
 
 /** 处理图片放大预览 */
@@ -214,7 +222,9 @@ const resetForm = () => {
   exhibitForm.label = ""
   exhibitForm.description = ""
   exhibitForm.figureUrl = ""
-  file.value = undefined
+  exhibitForm.figureUrlList = []
+  // file.value = undefined
+  fileList.value = []
 }
 /** 关闭新增/修改窗口的操作 */
 const handleClose = () => {
@@ -222,28 +232,67 @@ const handleClose = () => {
   resetForm()
 }
 /** 处理"修改"时的文件上传，要判断修改的是文件还是其他属性 */
+// const handleUpload = () => {
+//   return new Promise((resolve, reject) => {
+//     // console.log(file.value)
+//     if (file.value === undefined) {
+//       figureUrl.value = exhibitForm.figureUrl
+//       resolve(true)
+//     } else {
+//       const param = new FormData()
+//       param.append("file", file.value)
+//       // console.log(fileList.value)
+//       uploadFile(param)
+//         .then((res) => {
+//           figureUrl.value = res.data.data
+//           // console.log(res)
+//           resolve(true)
+//         })
+//         .catch((error) => {
+//           reject(error)
+//         })
+//     }
+//   })
+// }
+
 const handleUpload = () => {
-  return new Promise((resolve, reject) => {
-    // console.log(file.value)
-    if (file.value === undefined) {
-      figureUrl.value = exhibitForm.figureUrl
+  // console.log(fileList.value)
+  const p1 = Promise.resolve(true)
+  const pList = ref<any[]>([])
+  pList.value[0] = p1
+  if (fileList.value.length === 0) {
+    return new Promise((resolve, reject) => {
+      figureUrlList.value = exhibitForm.figureUrlList
       resolve(true)
-    } else {
-      const param = new FormData()
-      param.append("file", file.value)
-      // console.log(fileList.value)
-      uploadFile(param)
-        .then((res) => {
-          figureUrl.value = res.data.data
-          // console.log(res)
+    })
+  } else {
+    fileList.value.forEach(function (item, index) {
+      // await Promise.all(pList.value.slice(0, index + 1))
+      pList.value[index + 1] = new Promise((resolve, reject) => {
+        if (item.url !== undefined) {
+          figureUrlList.value.push(item.url)
           resolve(true)
-        })
-        .catch((error) => {
-          reject(error)
-        })
-    }
-  })
+        } else {
+          const param = new FormData()
+          param.append("file", item)
+          // console.log(fileList.value)
+          uploadFile(param)
+            .then((res) => {
+              figureUrlList.value.push(res.data.data)
+              // console.log(res)
+              resolve(index)
+            })
+            .catch((error) => {
+              reject(error)
+            })
+        }
+      })
+    })
+    return Promise.all(pList.value)
+    //promise.all方法用于将多个promise实例，包装成一个新的promise实例
+  }
 }
+
 /** 处理修改操作，若文件有更改，仍需先上传文件再更新 */
 const handleUpdate = async () => {
   await handleUpload()
@@ -252,12 +301,14 @@ const handleUpdate = async () => {
     label: exhibitForm.label,
     hallId: zoneChosen.value as number,
     description: exhibitForm.description,
-    figureUrl: figureUrl.value
-  }).then((res) => {
+    figureUrl: figureUrl.value,
+    figureUrlList: figureUrlList.value
+  }).then(() => {
     // console.log(res)
     ElMessage.success("修改成功")
     dialogVisible.value = false
     getExhibitList()
+    figureUrlList.value = []
   })
 }
 
@@ -268,7 +319,7 @@ const exhibitForm = reactive({
   label: "",
   description: "",
   figureUrl: "",
-  figureUrlList: [],
+  figureUrlList: [] as any[],
   nextId: 0,
   prevId: 0
 })
@@ -276,11 +327,12 @@ const exhibitFormRules: FormRules = reactive({
   label: [{ required: true, trigger: "blur", message: "请输入展品名" }],
   description: [{ required: true, trigger: "blur", message: "请输入展品描述" }]
 })
-const handleOpenAddZone = () => {
+const handleOpenAddExhibit = () => {
   if (zoneChosen.value === undefined) {
     ElMessage.warning("请先选择一个展区")
   } else {
     dialogVisible.value = true
+    fileList.value = []
   }
 }
 
@@ -294,8 +346,50 @@ const handleUpdateOpen = (item: any) => {
   exhibitForm.figureUrl = item.figureUrl
   exhibitForm.figureUrlList = item.figureUrlList
 
-  fileList.value.push({ url: item.figureUrl as string })
+  fileList.value = item.figureUrlList.map((i: any) => {
+    return {
+      url: i
+    }
+  })
   dialogVisible.value = true
+}
+
+const handleAdd = async () => {
+  // 无图新增时
+  // console.log("处理新增时： " + fileList.value)
+  if (fileList.value.length === 0) {
+    addExhibitApi({
+      label: exhibitForm.label,
+      description: exhibitForm.description,
+      hallId: zoneChosen.value as number,
+      figureUrl: "",
+      figureUrlList: []
+    }).then(() => {
+      ElMessage.success("新增成功")
+      dialogVisible.value = false
+      getExhibitList()
+      figureUrlList.value = []
+    })
+  } else {
+    // 有图新增时
+    await handleUpload()
+    // console.log("上传图片后的imageList: ")
+    // console.log(figureUrlList.value)
+    exhibitForm.figureUrlList = figureUrlList.value
+
+    addExhibitApi({
+      label: exhibitForm.label,
+      description: exhibitForm.description,
+      hallId: zoneChosen.value as number,
+      figureUrlList: figureUrlList.value,
+      figureUrl: figureUrlList.value[0]
+    }).then(() => {
+      ElMessage.success("新增成功")
+      dialogVisible.value = false
+      getExhibitList()
+      figureUrlList.value = []
+    })
+  }
 }
 
 /** 新增/修改展品接口 */
@@ -303,23 +397,7 @@ const handleCreate = () => {
   exhibitFormRef.value?.validate((valid: boolean) => {
     if (valid) {
       if (currentUpdateId.value === undefined) {
-        const param = new FormData()
-        param.append("file", file.value)
-        uploadFile(param).then((res) => {
-          figureUrl.value = res.data.data
-          exhibitForm.figureUrl = res.data.data
-
-          addExhibitApi({
-            label: exhibitForm.label,
-            description: exhibitForm.description,
-            hallId: zoneChosen.value as number,
-            figureUrl: figureUrl.value
-          }).then(() => {
-            ElMessage.success("新增成功")
-            dialogVisible.value = false
-            getExhibitList()
-          })
-        })
+        handleAdd()
       } else {
         handleUpdate()
       }
@@ -362,11 +440,11 @@ const handleChange = (item: any) => {
   })
 }
 
-/** 查看展区详情 */
+/** 查看展品详情 */
 const currentDetailId = ref<number>() //当前查看的展品id
 const detailDialogVisible = ref(false)
 const figureDetail = ref("")
-const figureListDetail = ref<string[]>([])
+const figureUrlListDetail = ref<string[]>([])
 const labelDetail = ref("")
 const descriptionDetail = ref("")
 const enabledDetail = ref(false)
@@ -375,7 +453,7 @@ const textDetail = ref<string[]>([]) //文本
 const handleDetails = (item: any) => {
   detailDialogVisible.value = true
   figureDetail.value = item.figureUrl
-  figureListDetail.value = item.figureUrlList
+  figureUrlListDetail.value = item.figureUrlList
   labelDetail.value = item.label
   descriptionDetail.value = item.description
   enabledDetail.value = item.enabled
@@ -542,6 +620,12 @@ watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSi
         <el-card style="margin-bottom: 10px" :body-style="{ padding: '0px' }" shadow="hover">
           <div class="image-block">
             <el-image v-if="item.figureUrl !== ''" :src="item.figureUrl" class="image" fit="contain" />
+            <el-image
+              v-else-if="item.figureUrlList.length !== 0 && item.figureUrlList[0] !== ''"
+              :src="item.figureUrlList[0]"
+              class="image"
+              fit="contain"
+            />
             <el-empty v-else :image-size="35" description="暂未上传" />
           </div>
           <div style="padding: 14px">
@@ -561,7 +645,7 @@ watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSi
       <el-col :span="6" :offset="exhibitList.length % 3 === 0 ? 2 : 1">
         <el-card class="add-icon-container" :body-style="{ padding: '0px' }" shadow="never">
           <!-- <el-icon @click="handleOpenAddZone"><Plus /></el-icon> -->
-          <el-button text :icon="Plus" @click="handleOpenAddZone" />
+          <el-button text :icon="Plus" @click="handleOpenAddExhibit" />
         </el-card>
       </el-col>
     </el-row>
@@ -602,12 +686,12 @@ watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSi
         <el-form-item prop="description" label="展品描述">
           <el-input type="textarea" v-model="exhibitForm.description" placeholder="请输入展品描述" />
         </el-form-item>
-        <el-form-item prop="figureUrl" label="上传展品图片">
+        <el-form-item prop="figureUrlList" label="上传展品图片">
           <el-upload
             class="uploader"
             action="#"
             ref="upload"
-            :limit="1"
+            :limit="5"
             :file-list="fileList"
             list-type="picture-card"
             accept=".jpg,.png,.jpeg,.JPG,.JPEG"
@@ -627,16 +711,26 @@ watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSi
         <el-button type="primary" @click="handleCreate">确认</el-button>
       </template>
     </el-dialog>
-    <!-- 展区详情 组件 -->
+
+    <!-- 展品详情 组件 -->
     <el-dialog v-model="detailDialogVisible" :title="labelDetail" @close="detailDialogVisible = false">
       <div class="imageCarousel">
         <el-carousel trigger="click" class="imageCarousel-item">
-          <!-- <el-carousel-item v-for="item in figureListDetail" :key="item">
-            <el-image v-if="item !== ''" :src="item" fit="contain" />
+          <el-carousel-item v-if="figureUrlListDetail.length === 0">
+            <el-empty :image-size="35" description="暂未上传" />
+          </el-carousel-item>
+          <el-carousel-item v-else v-for="item in figureUrlListDetail" :key="item">
+            <el-image
+              v-if="figureUrlListDetail.length !== 0 && figureUrlListDetail[0] !== ''"
+              :src="item"
+              fit="contain"
+              class="justify-center"
+              style="width: 100%; height: 100%"
+            />
             <el-empty v-else :image-size="35" description="暂未上传" />
-          </el-carousel-item> -->
-          <el-image v-if="figureDetail !== ''" :src="figureDetail" fit="scale-down" />
-          <el-empty v-else :image-size="35" description="暂未上传" />
+          </el-carousel-item>
+          <!-- <el-image v-if="figureDetail !== ''" :src="figureDetail" fit="scale-down" />
+          <el-empty v-else :image-size="35" description="暂未上传" /> -->
         </el-carousel>
       </div>
       <el-descriptions style="margin-top: 20px" :column="1" border>
@@ -728,7 +822,7 @@ watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSi
 }
 .add-icon-container {
   margin-bottom: 10px;
-  height: 300px;
+  height: 330px;
   display: flex;
   justify-content: center;
   :deep(.el-card__body) {

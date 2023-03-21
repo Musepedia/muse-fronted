@@ -153,6 +153,8 @@ const handlePictureRemove = (_file: any, _fileList: any) => {
       _fileList.splice(_fileList.indexOf(item), 1)
     }
   })
+  fileList.value = _fileList
+  creativeForm.imageList = _fileList
 }
 const previewPicDialog = ref(false)
 const previewImage = ref("")
@@ -446,7 +448,12 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getCrea
       <el-col v-for="(item, index) in creativeList" :key="item.id" :span="6" :offset="index % 3 === 0 ? 2 : 1">
         <el-card style="margin-bottom: 10px" :body-style="{ padding: '0px' }" shadow="hover">
           <div class="image-block">
-            <el-image v-if="item.imageList.length !== 0" :src="item.imageList[0]" class="image" fit="contain" />
+            <el-image
+              v-if="item.imageList.length !== 0 && item.imageList[0] !== ''"
+              :src="item.imageList[0]"
+              class="image"
+              fit="contain"
+            />
             <el-empty v-else :image-size="35" description="暂未上传" />
           </div>
           <div style="padding: 14px">
@@ -540,13 +547,16 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getCrea
     <el-dialog v-model="detailDialogVisible" :title="nameDetail" @close="detailDialogVisible = false">
       <div class="imageCarousel">
         <el-carousel trigger="click">
-          <el-carousel-item v-for="item in imageListDetail" :key="item">
+          <el-carousel-item v-if="imageListDetail.length === 0">
+            <el-empty :image-size="35" description="暂未上传" />
+          </el-carousel-item>
+          <el-carousel-item v-else v-for="item in imageListDetail" :key="item">
             <el-image
-              v-if="imageListDetail.length !== 0"
+              v-if="imageListDetail.length !== 0 && imageListDetail[0] !== ''"
               :src="item"
               fit="contain"
               class="justify-center"
-              style="width: 100%"
+              style="width: 100%; height: 100%"
             />
             <el-empty v-else :image-size="35" description="暂未上传" />
           </el-carousel-item>
@@ -582,7 +592,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getCrea
 
 .add-icon-container {
   margin-bottom: 10px;
-  height: 300px;
+  height: 330px;
   display: flex;
   justify-content: center;
   :deep(.el-card__body) {

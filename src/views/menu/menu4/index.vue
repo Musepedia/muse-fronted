@@ -130,13 +130,12 @@ const getQuestionList = () => {
     updateTime: searchData.updateTime || undefined,
     order: searchData.order || undefined,
     questionText: searchData.questionText || undefined,
-    answerType: searchData.answerType || undefined,
+    answerType: searchData.answerType === 0 ? 0 : searchData.answerType || undefined,
     answerText: searchData.answerText || undefined
   })
     .then((res: any) => {
       paginationData.total = res.data.data.total
       questionList.value = res.data.data.data
-      // console.log(res.data)
     })
     .catch(() => {
       questionList.value = []
@@ -270,10 +269,6 @@ const handleDetails = (item: any) => {
 const isChangable = ref(false)
 const handleUpdateAnswer = () => {
   isChangable.value = false
-  console.log(currentDetailId.value)
-  console.log(exhibitIdDetail.value)
-  console.log(answerTextDetail.value)
-  console.log(answerTypeDetail.value)
   updateQuestionApi({
     id: currentDetailId.value as number,
     exhibitId: exhibitIdDetail.value as number,
@@ -320,7 +315,6 @@ const getExhibitUpdatedList = () => {
       exhibitionHallId: zoneUpdated.value as number
     })
       .then((res) => {
-        console.log(res)
         exhibitUpdatedList.value = res.data.data.data
       })
       .catch(() => {
@@ -352,10 +346,6 @@ const handleUpdateOpen = (item: any) => {
 const handleCreate = () => {
   questionFormRef.value?.validate((valid: boolean) => {
     if (valid) {
-      // console.log(currentUpdateId.value)
-      // console.log(questionForm.exhibitId)
-      // console.log(questionForm.answerText)
-      // console.log(questionForm.answerType)
       updateQuestionApi({
         id: currentDetailId.value as number,
         exhibitId: exhibitUpdated.value !== undefined ? exhibitUpdated.value : questionForm.exhibitId,
@@ -519,7 +509,6 @@ watch(zoneChosen, getExhibitList, { immediate: true })
           <el-tag>{{ answerTypeDetail }}</el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="回答: ">
-          {{ answerTextDetail }}
           <div v-if="isChangable === false">
             {{ answerTextDetail }}
             <el-button type="warning" plain @click="isChangable = true">修改回答</el-button>
