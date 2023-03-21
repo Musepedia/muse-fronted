@@ -1,9 +1,10 @@
 <script lang="ts" setup>
-import GeneralComponent from "@/views/museschool/components/generalComponent.vue"
+import GeneralComponent from "../components/generalComponent.vue"
 import { onMounted, onUnmounted, reactive, ref, watch } from "vue"
 import { useRouter } from "vue-router"
 import { Component } from "museschool"
 import { useMuseschoolStore } from "@/store/modules/museschool"
+import { getComponentList, setComponentList } from "@/utils/cache/localStorage"
 
 const router = useRouter()
 
@@ -17,14 +18,15 @@ const colNum = ref(50)
 const rowHeight = ref(10)
 
 const chosenComponent = ref(-1) //当前选择的组件index
-const editComponent = reactive([false, false]) //右侧编辑区域显示内容，index对应原型组件列表，例如若[1]为ture，右侧显示图片组件的编辑区域
-
-const changingTitle = ref(false)
 
 //表单绑定，通过watch监视修改componentList中的对应部分
+const showTitleEditor = ref(false)
 const title = ref("研学手册标题")
+const showTextContentEditor = ref(false)
 const textContent = ref("")
+const showFontSizeEditor = ref(false)
 const fontSize = ref(16)
+const showfontWeightEditor = ref(false)
 const fontWeightOptions = reactive([
   { value: "bold", label: "Bold" },
   { value: "bolder", label: "Bolder" },
@@ -35,8 +37,11 @@ const fontWeightOptions = reactive([
   }
 ])
 const fontWeight = ref("")
+const showFontColorEditor = ref(false)
 const fontColor = ref("#000000")
+const showBackgroundColorEditor = ref(false)
 const backgroundColor = ref("#FFFFFF")
+const showImgURLEditor = ref(false)
 const imgURL = ref("")
 
 const mouseXY = { x: 0, y: 0 } //监测鼠标位置
@@ -45,7 +50,7 @@ const mouseXY = { x: 0, y: 0 } //监测鼠标位置
 //1.generalComponent
 //2.prototypeComponentList原型组件列表
 //3.该组件的右侧编辑区域（html&表单绑定）
-//4.选择组件变化监听中的switch
+//4.选择组件变化监听中的switch(每个选项)
 //5.监听表单变化
 //6.添加组件函数中的switch
 
@@ -53,12 +58,12 @@ const mouseXY = { x: 0, y: 0 } //监测鼠标位置
 const prototypeComponentList = reactive([
   {
     i: "-1",
-    type: "0",
+    type: 0,
     componentProps: { content: "文本组件", background: "#ffffff" }
   },
   {
     i: "-2",
-    type: "1",
+    type: 1,
     componentProps: {
       url: "https://northpicture.oss-cn-shanghai.aliyuncs.com/img/202302202247827.png",
       background: "#ffffff"
@@ -72,7 +77,7 @@ const componentList = museschoolStore.componentList
 onMounted(() => {
   //若componentList为空，尝试从本地存储获取数据
   if (componentList.length == 0) {
-    const storedComponentList = JSON.parse(localStorage.getItem("componentList")!)
+    const storedComponentList = getComponentList()
     if (storedComponentList) {
       for (let i = 0; i < storedComponentList.length; i++) {
         componentList.push(storedComponentList[i])
@@ -81,56 +86,50 @@ onMounted(() => {
   }
 
   //添加鼠标位置监听器
-  document.addEventListener(
-    "dragover",
-    function (e) {
-      mouseXY.x = e.clientX
-      mouseXY.y = e.clientY
-    },
-    false
-  )
+  document.addEventListener("dragover", handleDragover)
   //添加unload监听器，持续化存储componentList
-  window.addEventListener("beforeunload", () => {
-    localStorage.setItem("componentList", JSON.stringify(componentList))
-  })
+  window.addEventListener("beforeunload", handleBeforeunload)
 })
 
 onUnmounted(() => {
+  //持续化存储componentList
+  setComponentList(componentList)
   //移除鼠标位置监听器
-  document.removeEventListener(
-    "dragover",
-    function (e) {
-      mouseXY.x = e.clientX
-      mouseXY.y = e.clientY
-    },
-    false
-  )
+  document.removeEventListener("dragover", handleDragover)
   //移除unload监听器
-  window.removeEventListener("beforeunload", () => {
-    localStorage.setItem("componentList", JSON.stringify(componentList))
-  })
+  window.removeEventListener("beforeunload", handleBeforeunload)
 })
 
 //监听选择组件变化
 watch(chosenComponent, (newChosenComponent) => {
-  //更改右侧编辑区域显示内容
-  for (let i = 0; i < editComponent.length; i++) {
-    editComponent[i] = false
-  }
-  editComponent[parseInt(componentList[newChosenComponent].type)] = true
-  //修改表单placeholder
-  switch (componentList[newChosenComponent].type) {
-    case "0":
-      textContent.value = componentList[newChosenComponent].componentProps?.content || ""
-      fontSize.value = parseInt(componentList[newChosenComponent].componentProps?.fontSize || "16")
-      fontWeight.value = componentList[newChosenComponent].componentProps?.fontWeight || "normal"
-      fontColor.value = componentList[newChosenComponent].componentProps?.color || "#000000"
-      backgroundColor.value = componentList[newChosenComponent].componentProps?.background || "#ffffff"
-      break
-    case "1":
-      imgURL.value = componentList[newChosenComponent].componentProps?.url || ""
-      backgroundColor.value = componentList[newChosenComponent].componentProps?.background || "#ffffff"
-      break
+  showTextContentEditor.value = false
+  showFontSizeEditor.value = false
+  showfontWeightEditor.value = false
+  showFontColorEditor.value = false
+  showImgURLEditor.value = false
+  showBackgroundColorEditor.value = false
+  if (newChosenComponent != -1) {
+    //更改右侧编辑区域显示内容,修改表单placeholder
+    switch (componentList[newChosenComponent].type) {
+      case 0:
+        showTextContentEditor.value = true
+        textContent.value = componentList[newChosenComponent].componentProps?.content || ""
+        showFontSizeEditor.value = true
+        fontSize.value = parseInt(componentList[newChosenComponent].componentProps?.fontSize || "16")
+        showfontWeightEditor.value = true
+        fontWeight.value = componentList[newChosenComponent].componentProps?.fontWeight || "normal"
+        showFontColorEditor.value = true
+        fontColor.value = componentList[newChosenComponent].componentProps?.color || "#000000"
+        showBackgroundColorEditor.value = true
+        backgroundColor.value = componentList[newChosenComponent].componentProps?.background || "#ffffff"
+        break
+      case 1:
+        showImgURLEditor.value = true
+        imgURL.value = componentList[newChosenComponent].componentProps?.url || ""
+        showBackgroundColorEditor.value = true
+        backgroundColor.value = componentList[newChosenComponent].componentProps?.background || "#ffffff"
+        break
+    }
   }
 })
 
@@ -154,10 +153,21 @@ watch(imgURL, (newImgURL) => {
   componentList[chosenComponent.value].componentProps!.url = newImgURL
 })
 
+//unload之前持续化存储componentList
+function handleBeforeunload() {
+  setComponentList(componentList)
+}
+
+//鼠标拖动组件时获取鼠标位置
+function handleDragover(e: { clientX: number; clientY: number }) {
+  mouseXY.x = e.clientX
+  mouseXY.y = e.clientY
+}
+
 //修改标题
 function changeTitle() {
-  changingTitle.value = !changingTitle.value
-  if (!changingTitle.value) {
+  showTitleEditor.value = !showTitleEditor.value
+  if (!showTitleEditor.value) {
     museschoolStore.manualTitle = title
   }
 }
@@ -208,7 +218,7 @@ function dragend(index: number) {
       minH: 1,
       maxW: 20,
       maxH: 20,
-      type: index.toString(),
+      type: index,
       componentProps: componentProps
     }
     chosenComponent.value = componentList.length
@@ -218,15 +228,20 @@ function dragend(index: number) {
 
 //删除组件
 function deleteComponent(i: string) {
-  // 移除数组中i==1的项
   const index = componentList.findIndex(function (item) {
     return item.i == i
   })
-  if (chosenComponent.value == index) {
-    chosenComponent.value = 0
+  if (componentList.length == 1) {
+    chosenComponent.value = -1
+  } else {
+    if (chosenComponent.value === index && index > -1) {
+      chosenComponent.value = 0
+    }
   }
   if (index > -1) {
     componentList.splice(index, 1)
+  } else {
+    console.error("Invalid delete index")
   }
 }
 
@@ -263,7 +278,7 @@ function exportManual() {
       </div>
       <!--      <div>undo-redo</div>-->
       <div class="title" @click="changeTitle">{{ title }}</div>
-      <div v-if="changingTitle" class="titleForm">
+      <div v-if="showTitleEditor" class="titleForm">
         <el-input v-model="title" :placeholder="title" style="width: 70%" />
         <el-button color="#2565F1" @click="changeTitle">修改</el-button>
       </div>
@@ -286,7 +301,7 @@ function exportManual() {
             :i="item.i"
             :showDelete="false"
             :type="item.type"
-            style="background: transparent"
+            style="background: red"
           />
         </div>
       </div>
@@ -327,46 +342,37 @@ function exportManual() {
         </grid-layout>
       </div>
       <div class="props-editor">
-        <div v-if="editComponent[0]" class="editor text-editor">
-          <div class="editor-form">
-            <span>文本内容：</span>
-          </div>
-          <div class="editor-form">
-            <el-input v-model="textContent" :placeholder="textContent" autosize type="textarea" />
-          </div>
-          <div class="editor-form">
-            <el-input-number
-              v-model="fontSize"
-              :placeholder="fontSize.toString()"
-              :step-strictly="true"
-              controls-position="right"
-              style="margin-right: 5%"
-            />
-            <el-select v-model="fontWeight" :placeholder="fontWeight">
-              <el-option v-for="item in fontWeightOptions" :key="item.value" :label="item.label" :value="item.value" />
-            </el-select>
-          </div>
-          <div class="editor-form">
-            <div>
-              <span>文本颜色：</span>
-              <el-color-picker v-model="fontColor" show-alpha />
-            </div>
-            <div>
-              <span>背景颜色：</span>
-              <el-color-picker v-model="backgroundColor" show-alpha />
-            </div>
-          </div>
+        <div v-if="showTextContentEditor" class="editor-form">
+          <span>文本内容：</span>
         </div>
-        <div v-if="editComponent[1]" class="editor">
-          <div class="editor-form">
-            <span>URL：</span>
-            <el-input v-model="imgURL" :placeholder="textContent" />
+        <div v-if="showTextContentEditor" class="editor-form">
+          <el-input v-model="textContent" :placeholder="textContent" autosize type="textarea" />
+        </div>
+        <div v-if="showImgURLEditor" class="editor-form">
+          <span>URL：</span>
+          <el-input v-model="imgURL" :placeholder="textContent" />
+        </div>
+        <div v-if="showFontSizeEditor || showfontWeightEditor" class="editor-form">
+          <el-input-number
+            v-if="showFontSizeEditor"
+            v-model="fontSize"
+            :placeholder="fontSize.toString()"
+            :step-strictly="true"
+            controls-position="right"
+            style="margin-right: 5%"
+          />
+          <el-select v-if="showfontWeightEditor" v-model="fontWeight" :placeholder="fontWeight">
+            <el-option v-for="item in fontWeightOptions" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </div>
+        <div v-if="showFontColorEditor || showBackgroundColorEditor" class="editor-form">
+          <div v-if="showFontColorEditor">
+            <span>文本颜色：</span>
+            <el-color-picker v-model="fontColor" show-alpha />
           </div>
-          <div class="editor-form">
-            <div>
-              <span>背景颜色：</span>
-              <el-color-picker v-model="backgroundColor" show-alpha />
-            </div>
+          <div v-if="showBackgroundColorEditor">
+            <span>背景颜色：</span>
+            <el-color-picker v-model="backgroundColor" show-alpha />
           </div>
         </div>
       </div>
@@ -479,22 +485,18 @@ function exportManual() {
       height: 100%;
       background: #ffffff;
       overflow-y: scroll;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #b9b9b9;
 
-      .editor {
-        width: 100%;
+      .editor-form {
+        width: 80%;
+        margin-top: 5%;
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         align-items: center;
-        color: #b9b9b9;
-
-        .editor-form {
-          width: 80%;
-          margin-top: 5%;
-          display: flex;
-          flex-direction: row;
-          align-items: center;
-          justify-content: space-between;
-        }
+        justify-content: space-between;
       }
     }
   }

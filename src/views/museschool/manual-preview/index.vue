@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted, ref } from "vue"
 import GeneralComponent from "../components/generalComponent.vue"
 import { useMuseschoolStore } from "@/store/modules/museschool"
+import { getComponentList } from "@/utils/cache/localStorage"
 
 const museschoolStore = useMuseschoolStore()
 
@@ -17,7 +18,7 @@ const rowHeight = ref(10) //应该根据设计页面的等比例放大，保证�
 
 onMounted(() => {
   if (componentList.length == 0) {
-    const storedComponentList = JSON.parse(localStorage.getItem("componentList")!)
+    const storedComponentList = getComponentList()
     if (storedComponentList) {
       for (let i = 0; i < storedComponentList.length; i++) {
         componentList.push(storedComponentList[i])
@@ -51,6 +52,7 @@ function handleResize() {
     10 * ((manual.value as unknown as HTMLElement).getBoundingClientRect().width / museschoolStore.designZoneWidth)
 }
 
+//导出手册
 function exportManual() {
   window.print()
 }
@@ -110,7 +112,6 @@ function exportManual() {
 
 .app-container {
   width: 100%;
-  background: white;
   display: flex;
   flex-direction: column;
   align-content: center;
