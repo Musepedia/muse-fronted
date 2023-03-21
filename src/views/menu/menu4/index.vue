@@ -121,6 +121,7 @@ const typeList = reactive([
 const questionList = ref<any[]>([])
 const getQuestionList = () => {
   loading.value = true
+  console.log(searchData.answerType)
   getQuestionListApi({
     current: paginationData.currentPage,
     size: paginationData.pageSize,
@@ -130,7 +131,7 @@ const getQuestionList = () => {
     updateTime: searchData.updateTime || undefined,
     order: searchData.order || undefined,
     questionText: searchData.questionText || undefined,
-    answerType: searchData.answerType || undefined,
+    answerType: searchData.answerType === 0 ? 0 : searchData.answerType || undefined,
     answerText: searchData.answerText || undefined
   })
     .then((res: any) => {
@@ -519,7 +520,6 @@ watch(zoneChosen, getExhibitList, { immediate: true })
           <el-tag>{{ answerTypeDetail }}</el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="回答: ">
-          {{ answerTextDetail }}
           <div v-if="isChangable === false">
             {{ answerTextDetail }}
             <el-button type="warning" plain @click="isChangable = true">修改回答</el-button>
