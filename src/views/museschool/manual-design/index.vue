@@ -81,6 +81,8 @@ const prototypeComponentList = reactive([
   }
 ])
 
+let maxId = 1
+
 //组件列表
 const componentList = museschoolStore.componentList
 
@@ -88,9 +90,13 @@ onMounted(() => {
   //若componentList为空，尝试从本地存储获取数据
   if (componentList.length == 0) {
     const storedComponentList = getComponentList()
-    if (storedComponentList) {
-      for (let i = 0; i < storedComponentList.length; i++) {
-        componentList.push(storedComponentList[i])
+    if (storedComponentList.length != 0) {
+      maxId = parseInt(storedComponentList[storedComponentList.length - 1].i) + 1
+      console.log(maxId)
+      if (storedComponentList) {
+        for (let i = 0; i < storedComponentList.length; i++) {
+          componentList.push(storedComponentList[i])
+        }
       }
     }
   }
@@ -268,15 +274,8 @@ function addComponent(index: number) {
         break
     }
 
-    let i: string
-    if (componentList.length > 0) {
-      i = (parseInt(componentList[componentList.length - 1].i) + 1).toString()
-    } else {
-      i = "1"
-    }
-
     const component: Component = {
-      i: i,
+      i: maxId.toString(),
       x: Math.trunc((mouseXY.x - parentRect.left) / (parentRect.width / colNum.value)),
       y: Math.trunc((mouseXY.y - parentRect.top) / rowHeight.value),
       w: 10,
@@ -288,6 +287,8 @@ function addComponent(index: number) {
       type: index,
       componentProps: componentProps!
     }
+    console.log(maxId)
+    maxId++
     chosenComponent.value = componentList.length
     componentList.push(component)
   }
@@ -542,7 +543,7 @@ function uploadManual() {
           <el-input v-model="textContent" :placeholder="textContent" autosize type="textarea" />
         </div>
         <div v-if="showImgURLEditor" class="editor-form">
-          <span>URL </span>
+          <div style="width: 11.5%; margin-right: 2.4%">URL</div>
           <el-input v-model="imgURL" :placeholder="textContent" />
         </div>
         <div v-if="showFontSizeEditor || showFontWeightEditor" class="editor-form">
