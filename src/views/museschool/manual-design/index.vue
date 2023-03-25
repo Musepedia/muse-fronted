@@ -7,6 +7,9 @@ import { useMuseschoolStore } from "@/store/modules/museschool"
 import { getComponentList, setComponentList } from "@/utils/cache/localStorage"
 import { saveLocation } from "@/api/museschool"
 import { ElMessage } from "element-plus"
+import { Edit, MagicStick, Operation, Picture } from "@element-plus/icons-vue"
+import SvgIcon from "@/components/SvgIcon/index.vue"
+import museschool from "@/assets/museschool/museschool.png"
 
 const router = useRouter()
 
@@ -14,12 +17,31 @@ const museschoolStore = useMuseschoolStore()
 
 //组件引用
 const designZone = ref(null)
+const componentsTab0 = ref(null)
+const componentsTab1 = ref(null)
+const componentsTab2 = ref(null)
+const componentsTab3 = ref(null)
+const componentsTab4 = ref(null)
+const componentsTabBr = ref(null)
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const museschoolLogo = museschool
 
 //gridlayout列数，行高
 const colNum = ref(50)
 const rowHeight = ref(10)
 
 const chosenComponent = ref(-1) //当前选择的组件index
+
+//切换编辑区域tab相关变量
+const chosenEditorTab = ref(0)
+const editorTabColor = "color: #6f6f6f;border-bottom: 1px solid #e4e4e4"
+const activeEditorTabColor = "color: #326EF2;border-bottom: 1px solid #326EF2"
+
+//切换组件区域tab相关变量
+const chosenComponentsTab = ref(0)
+const componentsTabColor = "color: #6f6f6f;background:#313338"
+const activeComponentsTabColor = "color: #ffffff"
 
 //表单绑定，通过watch监视修改componentList中的对应部分
 const x = ref(1)
@@ -81,7 +103,7 @@ const prototypeComponentList = reactive([
   }
 ])
 
-let maxId = 1
+const maxId = ref(1)
 
 //组件列表
 const componentList = museschoolStore.componentList
@@ -90,19 +112,23 @@ onMounted(() => {
   //若componentList为空，尝试从本地存储获取数据
   if (componentList.length == 0) {
     const storedComponentList = getComponentList()
-    if (storedComponentList.length != 0) {
-      maxId = parseInt(storedComponentList[storedComponentList.length - 1].i) + 1
-      console.log(maxId)
+    if (storedComponentList.length > 0) {
+      maxId.value = parseInt(storedComponentList[storedComponentList.length - 1].i) + 1
       if (storedComponentList) {
         for (let i = 0; i < storedComponentList.length; i++) {
           componentList.push(storedComponentList[i])
         }
       }
     }
+  } else {
+    maxId.value = parseInt(componentList[componentList.length - 1].i) + 1
   }
 
   //计算行高
   resizeHandler()
+
+  //默认为组件tab
+  changeComponentsTab(0)
 
   //添加页面窗口大小监听器
   window.addEventListener("resize", resizeHandler)
@@ -126,6 +152,7 @@ onUnmounted(() => {
 
 //监听选择组件变化
 watch(chosenComponent, (newChosenComponent) => {
+  chosenEditorTab.value = 0
   showTextContentEditor.value = false
   showFontSizeEditor.value = false
   showFontWeightEditor.value = false
@@ -227,6 +254,7 @@ function resizeHandler() {
 
 //更改组件位置时同步修改表单值
 function componentMoveHandler(i: string, newX: number, newY: number) {
+  chooseComponent(i)
   x.value = newX
   y.value = newY
 }
@@ -275,7 +303,7 @@ function addComponent(index: number) {
     }
 
     const component: Component = {
-      i: maxId.toString(),
+      i: maxId.value.toString(),
       x: Math.trunc((mouseXY.x - parentRect.left) / (parentRect.width / colNum.value)),
       y: Math.trunc((mouseXY.y - parentRect.top) / rowHeight.value),
       w: 10,
@@ -287,8 +315,7 @@ function addComponent(index: number) {
       type: index,
       componentProps: componentProps!
     }
-    console.log(maxId)
-    maxId++
+    maxId.value++
     chosenComponent.value = componentList.length
     componentList.push(component)
   }
@@ -309,7 +336,7 @@ function deleteComponent(i: string) {
   if (index > -1) {
     componentList.splice(index, 1)
   } else {
-    console.error("Invalid delete index")
+    ElMessage.error("Invalid delete index")
   }
 }
 
@@ -353,13 +380,72 @@ function uploadManual() {
     ElMessage.success("success")
   })
 }
+
+//修改编辑区域Tab
+function changeEditorTab(i: number) {
+  chosenEditorTab.value = i
+}
+
+//修改组件区域Tab
+function changeComponentsTab(i: number) {
+  chosenComponentsTab.value = i
+
+  // 清空tab-btn圆角属性
+  const c0 = componentsTab0.value as unknown as HTMLElement
+  c0.classList.remove("rounded-bottom-right")
+  const c1 = componentsTab1.value as unknown as HTMLElement
+  c1.classList.remove("rounded-top-right")
+  c1.classList.remove("rounded-bottom-right")
+  const c2 = componentsTab2.value as unknown as HTMLElement
+  c2.classList.remove("rounded-top-right")
+  c2.classList.remove("rounded-bottom-right")
+  const c3 = componentsTab3.value as unknown as HTMLElement
+  c3.classList.remove("rounded-top-right")
+  c3.classList.remove("rounded-bottom-right")
+  const c4 = componentsTab4.value as unknown as HTMLElement
+  c4.classList.remove("rounded-top-right")
+  c4.classList.remove("rounded-bottom-right")
+  const cbr = componentsTabBr.value as unknown as HTMLElement
+  cbr.classList.remove("rounded-top-right")
+
+  //根据当前选中的tab修改圆角属性
+  switch (i) {
+    case 0:
+      c1.classList.add("rounded-top-right")
+      break
+    case 1:
+      c0.classList.add("rounded-bottom-right")
+      c2.classList.add("rounded-top-right")
+      break
+    case 2:
+      c1.classList.add("rounded-bottom-right")
+      c3.classList.add("rounded-top-right")
+      break
+    case 3:
+      c2.classList.add("rounded-bottom-right")
+      c4.classList.add("rounded-top-right")
+      break
+    case 4:
+      c3.classList.add("rounded-bottom-right")
+      cbr.classList.add("rounded-top-right")
+      break
+  }
+}
 </script>
 
 <template>
   <div class="app-container">
     <div class="header">
       <div class="logo">
-        <img alt="loading" src="@/assets/museschool/museschool.png" />
+        <el-image :src="museschoolLogo" style="height: 80%">
+          <template #error>
+            <div class="image-slot">
+              <el-icon>
+                <Picture />
+              </el-icon>
+            </div>
+          </template>
+        </el-image>
         <span>Museschool</span>
       </div>
       <!--      <div>undo-redo</div>-->
@@ -376,21 +462,76 @@ function uploadManual() {
     </div>
     <div class="main">
       <div class="prototype-components">
-        <div
-          v-for="(item, index) in prototypeComponentList"
-          :key="item.i"
-          class="droppable-element"
-          draggable="true"
-          @dragend="addComponent(index)"
-        >
-          <general-component
-            :component-props="item.componentProps"
-            :i="item.i"
-            :showDelete="false"
-            :type="item.type"
-            style="background: red"
-          />
+        <div class="components-tab-bar">
+          <div
+            ref="componentsTab0"
+            :style="chosenComponentsTab === 0 ? activeComponentsTabColor : componentsTabColor"
+            class="components-tab-btn"
+            @click="changeComponentsTab(0)"
+          >
+            <svg-icon class="components-tab-icon" name="component" />
+            组件
+          </div>
+          <div
+            ref="componentsTab1"
+            :style="chosenComponentsTab === 1 ? activeComponentsTabColor : componentsTabColor"
+            class="components-tab-btn"
+            @click="changeComponentsTab(1)"
+          >
+            <svg-icon class="components-tab-icon" name="template" />
+            模板
+          </div>
+          <div
+            ref="componentsTab2"
+            :style="chosenComponentsTab === 2 ? activeComponentsTabColor : componentsTabColor"
+            class="components-tab-btn"
+            @click="changeComponentsTab(2)"
+          >
+            <svg-icon class="components-tab-icon" name="upload" />
+            已上传
+          </div>
+          <div
+            ref="componentsTab3"
+            :style="chosenComponentsTab === 3 ? activeComponentsTabColor : componentsTabColor"
+            class="components-tab-btn"
+            @click="changeComponentsTab(3)"
+          >
+            <svg-icon class="components-tab-icon" name="text" />
+            文本
+          </div>
+          <div
+            ref="componentsTab4"
+            :style="chosenComponentsTab === 4 ? activeComponentsTabColor : componentsTabColor"
+            class="components-tab-btn"
+            @click="changeComponentsTab(4)"
+          >
+            <svg-icon class="components-tab-icon" name="material" />
+            素材
+          </div>
+          <div ref="componentsTabBr" style="width: 100%; height: 50%; background: #313338" />
         </div>
+        <div v-if="chosenComponentsTab === 0" class="components-tab">
+          <div
+            v-for="(item, index) in prototypeComponentList"
+            :key="item.i"
+            class="droppable-element"
+            draggable="true"
+            @dragend="addComponent(index)"
+          >
+            <general-component
+              :component-props="item.componentProps"
+              :i="item.i"
+              :showDelete="false"
+              :type="item.type"
+              style="background: red"
+            />
+          </div>
+        </div>
+        <div v-if="chosenComponentsTab === 1" class="components-tab">模版</div>
+        <div v-if="chosenComponentsTab === 2" class="components-tab">已上传</div>
+
+        <div v-if="chosenComponentsTab === 3" class="components-tab">文本</div>
+        <div v-if="chosenComponentsTab === 4" class="components-tab">素材</div>
       </div>
       <div ref="designZone" class="design-zone">
         <grid-layout
@@ -431,144 +572,178 @@ function uploadManual() {
         </grid-layout>
       </div>
       <div class="props-editor">
-        <div v-if="componentList.length !== 0" class="editor-form">
-          <span>位置 - 大小</span>
+        <div v-if="componentList.length !== 0" class="editor-form" style="margin-bottom: 5%">
+          <div
+            :style="chosenEditorTab === 0 ? activeEditorTabColor : editorTabColor"
+            class="editor-tab-btn"
+            @click="changeEditorTab(0)"
+          >
+            <el-icon size="25">
+              <Edit />
+            </el-icon>
+            <span>填充与线条</span>
+          </div>
+          <div
+            :style="chosenEditorTab === 1 ? activeEditorTabColor : editorTabColor"
+            class="editor-tab-btn"
+            @click="changeEditorTab(1)"
+          >
+            <el-icon size="25">
+              <MagicStick />
+            </el-icon>
+            <span>效果</span>
+          </div>
+          <div
+            :style="chosenEditorTab === 2 ? activeEditorTabColor : editorTabColor"
+            class="editor-tab-btn"
+            @click="changeEditorTab(2)"
+          >
+            <el-icon size="25">
+              <Operation />
+            </el-icon>
+            <span>大小与属性</span>
+          </div>
         </div>
-        <div v-if="componentList.length !== 0" class="editor-form">
-          <div class="half-editor-form">
-            <div class="form-label">x</div>
+        <div v-if="chosenEditorTab === 0" class="editor-tab">
+          <div v-if="showFontColorEditor || showBackgroundColorEditor" class="editor-form">
+            <div v-if="showFontColorEditor">
+              <span>文本颜色 </span>
+              <el-color-picker v-model="fontColor" show-alpha />
+            </div>
+            <div v-if="showBackgroundColorEditor">
+              <span>背景颜色 </span>
+              <el-color-picker v-model="backgroundColor" show-alpha />
+            </div>
+          </div>
+        </div>
+        <div v-if="chosenEditorTab === 1" class="editor-tab">效果</div>
+        <div v-if="chosenEditorTab === 2" class="editor-tab">
+          <div v-if="componentList.length !== 0" class="editor-form">
+            <div class="half-editor-form">
+              <div class="form-label">x</div>
+              <el-input-number
+                v-model="x"
+                :max="colNum - w"
+                :min="0"
+                :placeholder="x.toString()"
+                :step-strictly="true"
+                class="input-number"
+                controls-position="right"
+              />
+            </div>
+            <div class="half-editor-form">
+              <div class="form-label">y</div>
+              <el-input-number
+                v-model="y"
+                :min="0"
+                :placeholder="y.toString()"
+                :step-strictly="true"
+                class="input-number"
+                controls-position="right"
+              />
+            </div>
+          </div>
+          <div v-if="componentList.length !== 0" class="editor-form">
+            <div class="half-editor-form">
+              <div class="form-label">宽</div>
+              <el-input-number
+                v-model="w"
+                :max="maxW > colNum - x ? colNum - x : maxW"
+                :min="minW"
+                :placeholder="w.toString()"
+                :step-strictly="true"
+                class="input-number"
+                controls-position="right"
+              />
+            </div>
+            <div class="half-editor-form">
+              <div class="form-label">高</div>
+              <el-input-number
+                v-model="h"
+                :max="maxH"
+                :min="minH"
+                :placeholder="h.toString()"
+                :step-strictly="true"
+                class="input-number"
+                controls-position="right"
+              />
+            </div>
+          </div>
+          <div v-if="componentList.length !== 0" class="editor-form" style="font-size: 14px">
+            <div class="half-editor-form">
+              <div class="form-label">最小<br />宽度</div>
+              <el-input-number
+                v-model="minW"
+                :max="w"
+                :min="1"
+                :placeholder="minW.toString()"
+                :step-strictly="true"
+                class="input-number"
+                controls-position="right"
+              />
+            </div>
+            <div class="half-editor-form">
+              <div class="form-label">最大<br />宽度</div>
+              <el-input-number
+                v-model="maxW"
+                :max="colNum"
+                :min="w"
+                :placeholder="maxW.toString()"
+                :step-strictly="true"
+                class="input-number"
+                controls-position="right"
+              />
+            </div>
+          </div>
+          <div v-if="componentList.length !== 0" class="editor-form" style="font-size: 14px">
+            <div class="half-editor-form">
+              <div class="form-label">最小<br />高度</div>
+              <el-input-number
+                v-model="minH"
+                :max="h"
+                :min="1"
+                :placeholder="minH.toString()"
+                :step-strictly="true"
+                class="input-number"
+                controls-position="right"
+              />
+            </div>
+            <div class="half-editor-form">
+              <div class="form-label">最大<br />高度</div>
+              <el-input-number
+                v-model="maxH"
+                :min="h"
+                :placeholder="maxH.toString()"
+                :step-strictly="true"
+                class="input-number"
+                controls-position="right"
+              />
+            </div>
+          </div>
+          <div v-if="showTextContentEditor" class="editor-form">
+            <span>文本内容</span>
+          </div>
+          <div v-if="showTextContentEditor" class="editor-form">
+            <el-input v-model="textContent" :placeholder="textContent" autosize type="textarea" />
+          </div>
+          <div v-if="showImgURLEditor" class="editor-form">
+            <div style="width: 11.5%; margin-right: 2.4%">URL</div>
+            <el-input v-model="imgURL" :placeholder="textContent" />
+          </div>
+          <div v-if="showFontSizeEditor || showFontWeightEditor" class="editor-form">
             <el-input-number
-              v-model="x"
-              :max="colNum - w"
-              :min="0"
-              :placeholder="x.toString()"
+              v-if="showFontSizeEditor"
+              v-model="fontSize"
+              :max="300"
+              :min="12"
+              :placeholder="fontSize.toString()"
               :step-strictly="true"
-              class="input-number"
               controls-position="right"
+              style="margin-right: 5%"
             />
-          </div>
-          <div class="half-editor-form">
-            <div class="form-label">y</div>
-            <el-input-number
-              v-model="y"
-              :min="0"
-              :placeholder="y.toString()"
-              :step-strictly="true"
-              class="input-number"
-              controls-position="right"
-            />
-          </div>
-        </div>
-        <div v-if="componentList.length !== 0" class="editor-form">
-          <div class="half-editor-form">
-            <div class="form-label">宽</div>
-            <el-input-number
-              v-model="w"
-              :max="maxW > colNum - x ? colNum - x : maxW"
-              :min="minW"
-              :placeholder="w.toString()"
-              :step-strictly="true"
-              class="input-number"
-              controls-position="right"
-            />
-          </div>
-          <div class="half-editor-form">
-            <div class="form-label">高</div>
-            <el-input-number
-              v-model="h"
-              :max="maxH"
-              :min="minH"
-              :placeholder="h.toString()"
-              :step-strictly="true"
-              class="input-number"
-              controls-position="right"
-            />
-          </div>
-        </div>
-        <div v-if="componentList.length !== 0" class="editor-form" style="font-size: 14px">
-          <div class="half-editor-form">
-            <div class="form-label">最小<br />宽度</div>
-            <el-input-number
-              v-model="minW"
-              :max="w"
-              :min="1"
-              :placeholder="minW.toString()"
-              :step-strictly="true"
-              class="input-number"
-              controls-position="right"
-            />
-          </div>
-          <div class="half-editor-form">
-            <div class="form-label">最大<br />宽度</div>
-            <el-input-number
-              v-model="maxW"
-              :max="colNum"
-              :min="w"
-              :placeholder="maxW.toString()"
-              :step-strictly="true"
-              class="input-number"
-              controls-position="right"
-            />
-          </div>
-        </div>
-        <div v-if="componentList.length !== 0" class="editor-form" style="font-size: 14px">
-          <div class="half-editor-form">
-            <div class="form-label">最小<br />高度</div>
-            <el-input-number
-              v-model="minH"
-              :max="h"
-              :min="1"
-              :placeholder="minH.toString()"
-              :step-strictly="true"
-              class="input-number"
-              controls-position="right"
-            />
-          </div>
-          <div class="half-editor-form">
-            <div class="form-label">最大<br />高度</div>
-            <el-input-number
-              v-model="maxH"
-              :min="h"
-              :placeholder="maxH.toString()"
-              :step-strictly="true"
-              class="input-number"
-              controls-position="right"
-            />
-          </div>
-        </div>
-        <div v-if="showTextContentEditor" class="editor-form">
-          <span>文本内容</span>
-        </div>
-        <div v-if="showTextContentEditor" class="editor-form">
-          <el-input v-model="textContent" :placeholder="textContent" autosize type="textarea" />
-        </div>
-        <div v-if="showImgURLEditor" class="editor-form">
-          <div style="width: 11.5%; margin-right: 2.4%">URL</div>
-          <el-input v-model="imgURL" :placeholder="textContent" />
-        </div>
-        <div v-if="showFontSizeEditor || showFontWeightEditor" class="editor-form">
-          <el-input-number
-            v-if="showFontSizeEditor"
-            v-model="fontSize"
-            :max="300"
-            :min="12"
-            :placeholder="fontSize.toString()"
-            :step-strictly="true"
-            controls-position="right"
-            style="margin-right: 5%"
-          />
-          <el-select v-if="showFontWeightEditor" v-model="fontWeight" :placeholder="fontWeight">
-            <el-option v-for="item in fontWeightOptions" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </div>
-        <div v-if="showFontColorEditor || showBackgroundColorEditor" class="editor-form">
-          <div v-if="showFontColorEditor">
-            <span>文本颜色 </span>
-            <el-color-picker v-model="fontColor" show-alpha />
-          </div>
-          <div v-if="showBackgroundColorEditor">
-            <span>背景颜色 </span>
-            <el-color-picker v-model="backgroundColor" show-alpha />
+            <el-select v-if="showFontWeightEditor" v-model="fontWeight" :placeholder="fontWeight">
+              <el-option v-for="item in fontWeightOptions" :key="item.value" :label="item.label" :value="item.value" />
+            </el-select>
           </div>
         </div>
       </div>
@@ -605,10 +780,6 @@ function uploadManual() {
       font-size: 29px;
       font-weight: bold;
       margin-left: 5%;
-
-      img {
-        height: 80%;
-      }
     }
 
     .title {
@@ -656,14 +827,52 @@ function uploadManual() {
       width: 25%;
       height: 100%;
       background: rgb(74, 80, 94);
-      overflow-y: scroll;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: center;
 
-      .droppable-element {
-        width: 60%;
-        margin-top: 5%;
+      .components-tab-bar {
+        width: 18%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        .components-tab-btn {
+          width: 100%;
+          height: 10%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+
+          .components-tab-icon {
+            margin-bottom: 6px;
+            font-size: 30px;
+          }
+        }
+
+        .rounded-top-right {
+          border-radius: 0 10px 0 0;
+        }
+
+        .rounded-bottom-right {
+          border-radius: 0 0 10px 0;
+        }
+      }
+
+      .components-tab {
+        width: 82%;
+        height: 100%;
+        overflow-y: scroll;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        .droppable-element {
+          width: 60%;
+          margin-top: 5%;
+        }
       }
     }
 
@@ -687,6 +896,52 @@ function uploadManual() {
       color: #b9b9b9;
       font-size: 15px;
 
+      .editor-tab {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        .editor-form {
+          width: 80%;
+          margin-top: 5%;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+
+          .editor-tab-btn {
+            height: 120%;
+            width: calc(100% / 3);
+            margin-bottom: 5%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+          }
+
+          .half-editor-form {
+            width: 46%;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+
+            .form-label {
+              width: 25%;
+              display: flex;
+              flex-direction: row;
+              align-items: center;
+              justify-content: center;
+            }
+
+            .input-number {
+              width: 70%;
+            }
+          }
+        }
+      }
+
       .editor-form {
         width: 80%;
         margin-top: 5%;
@@ -695,24 +950,14 @@ function uploadManual() {
         align-items: center;
         justify-content: space-between;
 
-        .half-editor-form {
-          width: 46%;
+        .editor-tab-btn {
+          height: 120%;
+          width: calc(100% / 3);
+          margin-bottom: 5%;
           display: flex;
-          flex-direction: row;
+          flex-direction: column;
           align-items: center;
-          justify-content: space-between;
-
-          .form-label {
-            width: 25%;
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: center;
-          }
-
-          .input-number {
-            width: 70%;
-          }
+          justify-content: center;
         }
       }
     }

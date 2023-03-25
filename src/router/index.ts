@@ -134,7 +134,7 @@ export const constantRoutes: RouteRecordRaw[] = [
     name: "muse-school",
     meta: {
       title: "Museschool",
-      svgIcon: "museschool"
+      svgIcon: "museschool-linear"
     },
     children: [
       {
