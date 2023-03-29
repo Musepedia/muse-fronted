@@ -3,7 +3,7 @@ import { onMounted, ref, watch } from "vue"
 
 //图片组件参数格式
 // componentProps: { url: "", background: ""}
-const props = defineProps(["i", "componentProps"])
+const props = defineProps(["componentProps"])
 
 //组件样式
 const componentStyle = ref("")
@@ -27,7 +27,7 @@ watch(props, async () => {
 
 <template>
   <div :style="componentStyle" class="app-container">
-    <el-image :src="props.componentProps.url" class="image1" />
+    <el-image :src="props.componentProps.url" class="image" />
   </div>
 </template>
 
@@ -36,7 +36,7 @@ watch(props, async () => {
   width: 100%;
   height: 100%;
 
-  .image1 {
+  .image {
     width: 100%;
   }
 }

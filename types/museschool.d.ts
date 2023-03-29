@@ -1,4 +1,5 @@
 declare module "museschool" {
+  //组件类型
   interface Component {
     i: string
     x: number
@@ -18,5 +19,12 @@ declare module "museschool" {
       background?: string
       url?: string
     }
+  }
+
+  //研学清单类型
+  interface Manual {
+    id: number
+    title: string
+    componentList: Component[]
   }
 }

@@ -2,7 +2,7 @@
 
 import CacheKey from "@/constants/cacheKey"
 import { type ThemeName } from "@/hooks/useTheme"
-import { Component } from "museschool"
+import { Component, Manual } from "museschool"
 
 export const getSidebarStatus = () => {
   return localStorage.getItem(CacheKey.SIDEBAR_STATUS)
@@ -22,6 +22,14 @@ export const getComponentList = () => {
   return JSON.parse(localStorage.getItem(CacheKey.COMPONENT_LIST)!)
 }
 
+export const getManual = () => {
+  return JSON.parse(localStorage.getItem(CacheKey.MANUAL)!)
+}
+
 export const setComponentList = (componentList: Component[]) => {
   localStorage.setItem(CacheKey.COMPONENT_LIST, JSON.stringify(componentList))
+}
+
+export const setManual = (manual: Manual) => {
+  localStorage.setItem(CacheKey.MANUAL, JSON.stringify(manual))
 }

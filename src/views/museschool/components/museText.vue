@@ -3,7 +3,7 @@ import { onMounted, ref, watch } from "vue"
 
 //文本组件参数格式
 // componentProps: { content: "", fontSize: "", fontWeight: "", color: "", background: ""}
-const props = defineProps(["i", "componentProps"])
+const props = defineProps(["componentProps"])
 
 //组件样式
 const componentStyle = ref("")

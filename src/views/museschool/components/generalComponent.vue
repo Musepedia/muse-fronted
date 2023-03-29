@@ -2,6 +2,7 @@
 import { computed, markRaw, ref } from "vue"
 import museText from "./museText.vue"
 import museImage from "./museImage.vue"
+import museAudio from "./museAudio.vue"
 import { Close } from "@element-plus/icons-vue"
 
 const props = defineProps(["showDelete", "i", "type", "componentProps"])
@@ -11,7 +12,7 @@ const props = defineProps(["showDelete", "i", "type", "componentProps"])
 //2.import
 
 //已开发的组件列表，此数组的索引即为组件的type字段
-const componentList = markRaw([museText, museImage])
+const componentList = markRaw([museText, museImage, museAudio])
 const currentComponent = computed(() => {
   return componentList[props.type]
 })

@@ -6,6 +6,7 @@ class CacheKey {
   static SIDEBAR_STATUS = `${SYSTEM_NAME}-sidebar-status-key`
   static ACTIVE_THEME_NAME = `${SYSTEM_NAME}-active-theme-name-key`
   static COMPONENT_LIST = `${SYSTEM_NAME}-component-list`
+  static MANUAL = `${SYSTEM_NAME}-manual`
 }
 
 export default CacheKey

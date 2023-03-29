@@ -3,9 +3,9 @@ import GeneralComponent from "../components/generalComponent.vue"
 import { onMounted, onUnmounted, reactive, ref, watch } from "vue"
 import { useRouter } from "vue-router"
 import { Component } from "museschool"
+import { getResearchListById } from "@/api/museschool"
 import { useMuseschoolStore } from "@/store/modules/museschool"
-import { getComponentList, setComponentList } from "@/utils/cache/localStorage"
-import { saveLocation } from "@/api/museschool"
+import { getManual, setManual } from "@/utils/cache/localStorage"
 import { ElMessage } from "element-plus"
 import { Edit, MagicStick, Operation, Picture } from "@element-plus/icons-vue"
 import SvgIcon from "@/components/SvgIcon/index.vue"
@@ -23,9 +23,6 @@ const componentsTab2 = ref(null)
 const componentsTab3 = ref(null)
 const componentsTab4 = ref(null)
 const componentsTabBr = ref(null)
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const museschoolLogo = museschool
 
 //gridlayout列数，行高
 const colNum = ref(50)
@@ -56,8 +53,8 @@ const showTitleEditor = ref(false)
 const title = ref("研学手册标题")
 const showTextContentEditor = ref(false)
 const textContent = ref("")
-const showImgURLEditor = ref(false)
-const imgURL = ref("")
+const showURLEditor = ref(false)
+const URL = ref("")
 const showFontSizeEditor = ref(false)
 const fontSize = ref(16)
 const showFontWeightEditor = ref(false)
@@ -100,18 +97,27 @@ const prototypeComponentList = reactive([
       url: "https://northpicture.oss-cn-shanghai.aliyuncs.com/img/202302202247827.png",
       background: "#ffffff"
     }
+  },
+  {
+    i: "-3",
+    type: 2,
+    componentProps: {
+      url: "/Users/north/Documents/Code/Web/muse-fronted/src/assets/museschool/canon.mp3",
+      background: "#ffffff"
+    }
   }
 ])
 
+//新增组件的id
 const maxId = ref(1)
 
 //组件列表
-const componentList = museschoolStore.componentList
+const componentList = museschoolStore.manual.componentList
 
 onMounted(() => {
   //若componentList为空，尝试从本地存储获取数据
   if (componentList.length == 0) {
-    const storedComponentList = getComponentList()
+    const storedComponentList = getManual().componentList
     if (storedComponentList.length > 0) {
       maxId.value = parseInt(storedComponentList[storedComponentList.length - 1].i) + 1
       if (storedComponentList) {
@@ -134,13 +140,13 @@ onMounted(() => {
   window.addEventListener("resize", resizeHandler)
   //添加鼠标位置监听器
   document.addEventListener("dragover", dragoverHandler)
-  //添加unload监听器，持续化存储componentList
+  //添加unload监听器，持久化存储manual
   window.addEventListener("beforeunload", beforeunloadHandler)
 })
 
 onUnmounted(() => {
-  //持续化存储componentList
-  setComponentList(componentList)
+  //持久化存储manual
+  setManual({ id: -1, title: title.value, componentList: componentList })
 
   //移除页面窗口大小监听器
   window.removeEventListener("resize", resizeHandler)
@@ -157,7 +163,7 @@ watch(chosenComponent, (newChosenComponent) => {
   showFontSizeEditor.value = false
   showFontWeightEditor.value = false
   showFontColorEditor.value = false
-  showImgURLEditor.value = false
+  showURLEditor.value = false
   showBackgroundColorEditor.value = false
   if (newChosenComponent != -1) {
     x.value = componentList[newChosenComponent].x
@@ -183,8 +189,14 @@ watch(chosenComponent, (newChosenComponent) => {
         backgroundColor.value = componentList[newChosenComponent].componentProps?.background || "#ffffff"
         break
       case 1:
-        showImgURLEditor.value = true
-        imgURL.value = componentList[newChosenComponent].componentProps?.url || ""
+        showURLEditor.value = true
+        URL.value = componentList[newChosenComponent].componentProps?.url || ""
+        showBackgroundColorEditor.value = true
+        backgroundColor.value = componentList[newChosenComponent].componentProps?.background || "#ffffff"
+        break
+      case 2:
+        showURLEditor.value = true
+        URL.value = componentList[newChosenComponent].componentProps?.url || ""
         showBackgroundColorEditor.value = true
         backgroundColor.value = componentList[newChosenComponent].componentProps?.background || "#ffffff"
         break
@@ -208,8 +220,8 @@ watch(fontColor, (newFontColor) => {
 watch(backgroundColor, (newBackgroundColor) => {
   componentList[chosenComponent.value].componentProps!.background = newBackgroundColor
 })
-watch(imgURL, (newImgURL) => {
-  componentList[chosenComponent.value].componentProps!.url = newImgURL
+watch(URL, (newURL) => {
+  componentList[chosenComponent.value].componentProps!.url = newURL
 })
 watch(x, (newX) => {
   componentList[chosenComponent.value].x = newX
@@ -236,9 +248,9 @@ watch(maxH, (newMaxH) => {
   componentList[chosenComponent.value].maxH = newMaxH
 })
 
-//unload之前持续化存储componentList
+//unload之前持久化存储manual
 function beforeunloadHandler() {
-  setComponentList(componentList)
+  setManual({ id: -1, title: title.value, componentList: componentList })
 }
 
 //鼠标拖动组件时获取鼠标位置
@@ -269,7 +281,7 @@ function componentResizeHandler(i: string, newW: number, newH: number) {
 function changeTitle() {
   showTitleEditor.value = !showTitleEditor.value
   if (!showTitleEditor.value) {
-    museschoolStore.manualTitle = title
+    museschoolStore.manual.title = title.value
   }
 }
 
@@ -297,6 +309,12 @@ function addComponent(index: number) {
       case 1:
         componentProps = {
           url: "https://northpicture.oss-cn-shanghai.aliyuncs.com/img/202302202247827.png",
+          background: "#ffffff"
+        }
+        break
+      case 2:
+        componentProps = {
+          url: "@/assets/museschool/canon.mp3",
           background: "#ffffff"
         }
         break
@@ -349,35 +367,52 @@ function chooseComponent(i: string) {
 
 //预览手册
 function toManualPreview() {
-  museschoolStore.componentList = componentList
+  museschoolStore.manual.componentList = componentList
   museschoolStore.exportManual = false
   router.push({ name: "manual-preview" })
 }
 
 //导出手册
 function exportManual() {
-  museschoolStore.componentList = componentList
+  museschoolStore.manual.componentList = componentList
   museschoolStore.exportManual = true
   router.push({ name: "manual-preview" })
 }
 
 //上传手册
 function uploadManual() {
-  //下面是上传单个组件的代码，后续要删除
-  saveLocation({
-    name: "test",
-    x: 1,
-    y: 1,
-    width: 1,
-    minWidth: 1,
-    maxWidth: 1,
-    height: 1,
-    minHeight: 1,
-    maxHeight: 1,
-    typeId: 1,
-    content: "string"
-  }).then(() => {
-    ElMessage.success("success")
+  //此处应该加上判断是否为第一次报错（insert/update）
+  // saveResearchList(title.value, componentList)
+  //   .then((res: any) => {
+  //     console.log(res)
+  //   })
+  //   .catch((err: any) => {
+  //     console.error(err)
+  //   })
+  // const id = 1
+  // updateResearchListById(id, title.value, componentList)
+  //   .then((res: any) => {
+  //     console.log(res)
+  //   })
+  //   .catch((err: any) => {
+  //     console.error(err)
+  //   })
+  getResearchListById({ id: 1 })
+    .then((res: any) => {
+      console.log(res)
+    })
+    .catch((err: any) => {
+      console.error(err)
+    })
+}
+
+//清空手册
+function clearManual() {
+  componentList.splice(0)
+  setManual({
+    id: -1,
+    title: title.value,
+    componentList: []
   })
 }
 
@@ -437,7 +472,7 @@ function changeComponentsTab(i: number) {
   <div class="app-container">
     <div class="header">
       <div class="logo">
-        <el-image :src="museschoolLogo" style="height: 80%">
+        <el-image :src="museschool" style="height: 80%">
           <template #error>
             <div class="image-slot">
               <el-icon>
@@ -458,6 +493,7 @@ function changeComponentsTab(i: number) {
         <el-button color="#2565F1" icon="Monitor" @click="toManualPreview">预览</el-button>
         <el-button color="#FFFFFF" icon="Download" @click="exportManual">导出</el-button>
         <el-button color="#2565F1" icon="Upload" @click="uploadManual">上传</el-button>
+        <el-button icon="Delete" theme="danger" @click="clearManual">清空</el-button>
       </div>
     </div>
     <div class="main">
@@ -726,9 +762,9 @@ function changeComponentsTab(i: number) {
           <div v-if="showTextContentEditor" class="editor-form">
             <el-input v-model="textContent" :placeholder="textContent" autosize type="textarea" />
           </div>
-          <div v-if="showImgURLEditor" class="editor-form">
+          <div v-if="showURLEditor" class="editor-form">
             <div style="width: 11.5%; margin-right: 2.4%">URL</div>
-            <el-input v-model="imgURL" :placeholder="textContent" />
+            <el-input v-model="URL" :placeholder="textContent" />
           </div>
           <div v-if="showFontSizeEditor || showFontWeightEditor" class="editor-form">
             <el-input-number

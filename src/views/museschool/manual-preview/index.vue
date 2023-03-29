@@ -2,7 +2,7 @@
 import { onMounted, onUnmounted, ref } from "vue"
 import GeneralComponent from "../components/generalComponent.vue"
 import { useMuseschoolStore } from "@/store/modules/museschool"
-import { getComponentList } from "@/utils/cache/localStorage"
+import { getManual } from "@/utils/cache/localStorage"
 
 const museschoolStore = useMuseschoolStore()
 
@@ -10,7 +10,7 @@ const museschoolStore = useMuseschoolStore()
 const manual = ref(null)
 
 //组件列表
-const componentList = museschoolStore.componentList
+const componentList = museschoolStore.manual.componentList
 
 //gridlayout列数，行高
 const colNum = ref(50) //应该根据设计页面的等比例放大，保证显示效果一致性
@@ -18,7 +18,7 @@ const rowHeight = ref(10) //应该根据设计页面的等比例放大，保证�
 
 onMounted(() => {
   if (componentList.length == 0) {
-    const storedComponentList = getComponentList()
+    const storedComponentList = getManual().componentList
     if (storedComponentList) {
       for (let i = 0; i < storedComponentList.length; i++) {
         componentList.push(storedComponentList[i])
