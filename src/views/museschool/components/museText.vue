@@ -1,14 +1,15 @@
 <script lang="ts" setup>
 import { onMounted, ref, watch } from "vue"
 
+/* 传入参数相关 ********************************************************************************************/
 //文本组件参数格式
 // componentProps: { content: "", fontSize: "", fontWeight: "", color: "", background: ""}
 const props = defineProps(["componentProps"])
+const componentStyle = ref("") //组件样式
 
-//组件样式
-const componentStyle = ref("")
-
-onMounted(() => {
+//监听props变化
+watch(props, async () => {
+  componentStyle.value = ""
   //解析componentProps
   if (props.componentProps.fontSize != null) {
     componentStyle.value = componentStyle.value + "font-size:" + props.componentProps.fontSize + "px;"
@@ -24,9 +25,8 @@ onMounted(() => {
   }
 })
 
-//监听props变化
-watch(props, async () => {
-  componentStyle.value = ""
+/* 生命周期钩子 ********************************************************************************************/
+onMounted(() => {
   //解析componentProps
   if (props.componentProps.fontSize != null) {
     componentStyle.value = componentStyle.value + "font-size:" + props.componentProps.fontSize + "px;"

@@ -27,4 +27,9 @@ declare module "museschool" {
     title: string
     componentList: Component[]
   }
+
+  //图片类型
+  interface MuseschoolImage {
+    url: string
+  }
 }

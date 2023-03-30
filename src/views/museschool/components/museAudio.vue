@@ -4,22 +4,13 @@ import { VideoPause, VideoPlay } from "@element-plus/icons-vue"
 import { ElMessage } from "element-plus"
 import canon from "@/assets/museschool/canon.mp3"
 
+/* 传入参数相关 ********************************************************************************************/
 //音频组件参数格式
 // componentProps: { url: "", background: ""}
 const props = defineProps(["componentProps"])
+const componentStyle = ref("") //组件样式
 
-//组件样式
-const componentStyle = ref("")
-
-//是否获取到音频
-let ifGetAudio = false
-
-//是否正在播放
-const ifPlaying = ref(false)
-
-//音频对象
-const audio = new Audio()
-
+/* 生命周期钩子 ********************************************************************************************/
 onMounted(async () => {
   //解析componentProps
   if (props.componentProps.background != null) {
@@ -30,6 +21,11 @@ onMounted(async () => {
     ifGetAudio = true
   }
 })
+
+/* 音频控制相关 ********************************************************************************************/
+let ifGetAudio = false //是否获取到音频
+const ifPlaying = ref(false) //是否正在播放
+const audio = new Audio() //音频对象
 
 //播放/暂停音乐
 async function playPauseAudio() {

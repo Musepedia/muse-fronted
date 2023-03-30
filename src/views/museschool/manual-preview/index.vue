@@ -6,16 +6,20 @@ import { getManual } from "@/utils/cache/localStorage"
 
 const museschoolStore = useMuseschoolStore()
 
-//组件引用
-const manual = ref(null)
-
-//组件列表
-const componentList = museschoolStore.manual.componentList
+/* 组件渲染相关 ********************************************************************************************/
+const manualRef = ref(null) //清单组件引用
+const componentList = museschoolStore.manual.componentList //组件列表
 
 //gridlayout列数，行高
 const colNum = ref(50) //应该根据设计页面的等比例放大，保证显示效果一致性
 const rowHeight = ref(10) //应该根据设计页面的等比例放大，保证显示效果一致性
 
+//监听页面窗口大小变化，重新计算行高
+function resizeHandler() {
+  rowHeight.value = (manualRef.value as unknown as HTMLElement).getBoundingClientRect().width / colNum.value
+}
+
+/* 生命周期钩子 ********************************************************************************************/
 onMounted(() => {
   if (componentList.length == 0) {
     const storedComponentList = getManual().componentList
@@ -44,24 +48,14 @@ onUnmounted(() => {
   //移除事件监听器
   window.removeEventListener("resize", resizeHandler)
 })
-
-//监听页面窗口大小变化，重新计算行高
-function resizeHandler() {
-  rowHeight.value = (manual.value as unknown as HTMLElement).getBoundingClientRect().width / colNum.value
-}
-
-//导出手册
-function exportManual() {
-  window.print()
-}
 </script>
 
 <template>
   <div class="app-container">
     <div class="export">
-      <el-button color="#2565F1" icon="Download" @click="exportManual">导出</el-button>
+      <el-button color="#2565F1" icon="Download" @click="window.print()">导出</el-button>
     </div>
-    <div ref="manual" class="manual">
+    <div ref="manualRef" class="manual">
       <grid-layout
         :col-num="colNum"
         :isDraggable="false"

@@ -5,8 +5,10 @@ import museImage from "./museImage.vue"
 import museAudio from "./museAudio.vue"
 import { Close } from "@element-plus/icons-vue"
 
+//组件参数
 const props = defineProps(["showDelete", "i", "type", "componentProps"])
 
+/* 渲染组件相关 ********************************************************************************************/
 //添加组件应修改
 //1.componentList 已开发的组件列表
 //2.import
@@ -17,7 +19,8 @@ const currentComponent = computed(() => {
   return componentList[props.type]
 })
 
-//是否可以显示删除按钮
+/* 显示/隐藏删除按钮相关 ********************************************************************************************/
+//是否可以显示删除按钮（原型组件不可删除）
 const showDelete = ref(false)
 
 //显示删除按钮
@@ -26,15 +29,10 @@ function showDeleteBtn() {
     showDelete.value = true
   }
 }
-
-//隐藏删除按钮
-function hideDeleteBtn() {
-  showDelete.value = false
-}
 </script>
 
 <template>
-  <div class="app-container" @mouseenter="showDeleteBtn" @mouseleave="hideDeleteBtn">
+  <div class="app-container" @mouseenter="showDeleteBtn" @mouseleave="showDelete = false">
     <component
       :is="currentComponent"
       :componentProps="props.componentProps"

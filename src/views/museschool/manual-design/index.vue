@@ -2,79 +2,86 @@
 import GeneralComponent from "../components/generalComponent.vue"
 import { onMounted, onUnmounted, reactive, ref, watch } from "vue"
 import { useRouter } from "vue-router"
-import { Component } from "museschool"
+import { Component, MuseschoolImage } from "museschool"
 import { getResearchListById } from "@/api/museschool"
 import { useMuseschoolStore } from "@/store/modules/museschool"
-import { getManual, setManual } from "@/utils/cache/localStorage"
+import { getManual, getUploadedImages, setManual, setUploadedImages } from "@/utils/cache/localStorage"
 import { ElMessage } from "element-plus"
-import { Edit, MagicStick, Operation, Picture } from "@element-plus/icons-vue"
+import { Edit, MagicStick, Operation, Picture, Plus } from "@element-plus/icons-vue"
 import SvgIcon from "@/components/SvgIcon/index.vue"
-import museschool from "@/assets/museschool/museschool.png"
+import museschool_logo from "@/assets/museschool/museschool_logo.png"
 
 const router = useRouter()
 
 const museschoolStore = useMuseschoolStore()
 
-//组件引用
-const designZone = ref(null)
-const componentsTab0 = ref(null)
-const componentsTab1 = ref(null)
-const componentsTab2 = ref(null)
-const componentsTab3 = ref(null)
-const componentsTab4 = ref(null)
-const componentsTabBr = ref(null)
+/* 研学手册信息相关 ********************************************************************************************/
+const id = ref(museschoolStore.manual.id) //本研学手册的id
+const title = ref("研学手册标题") //标题
+const titleEditorVisible = ref(false)
 
-//gridlayout列数，行高
-const colNum = ref(50)
-const rowHeight = ref(10)
-
-const chosenComponent = ref(-1) //当前选择的组件index
-
-//切换编辑区域tab相关变量
-const chosenEditorTab = ref(0)
-const editorTabColor = "color: #6f6f6f;border-bottom: 1px solid #e4e4e4"
-const activeEditorTabColor = "color: #326EF2;border-bottom: 1px solid #326EF2"
-
-//切换组件区域tab相关变量
-const chosenComponentsTab = ref(0)
-const componentsTabColor = "color: #6f6f6f;background:#313338"
-const activeComponentsTabColor = "color: #ffffff"
-
-//表单绑定，通过watch监视修改componentList中的对应部分
-const x = ref(1)
-const y = ref(1)
-const w = ref(10)
-const h = ref(10)
-const minW = ref(1)
-const maxW = ref(20)
-const minH = ref(1)
-const maxH = ref(20)
-const showTitleEditor = ref(false)
-const title = ref("研学手册标题")
-const showTextContentEditor = ref(false)
-const textContent = ref("")
-const showURLEditor = ref(false)
-const URL = ref("")
-const showFontSizeEditor = ref(false)
-const fontSize = ref(16)
-const showFontWeightEditor = ref(false)
-const fontWeightOptions = reactive([
-  { value: "bold", label: "Bold" },
-  { value: "bolder", label: "Bolder" },
-  { value: "lighter", label: "Lighter" },
-  {
-    value: "normal",
-    label: "normal"
+//修改标题
+function titleChangeHandler() {
+  titleEditorVisible.value = !titleEditorVisible.value
+  if (!titleEditorVisible.value) {
+    museschoolStore.manual.title = title.value
   }
-])
-const fontWeight = ref("")
-const showFontColorEditor = ref(false)
-const fontColor = ref("#000000")
-const showBackgroundColorEditor = ref(false)
-const backgroundColor = ref("#FFFFFF")
+}
 
-const mouseXY = { x: 0, y: 0 } //监测鼠标位置
+//预览手册
+function manualPreviewHandler() {
+  museschoolStore.manual.id = id.value
+  museschoolStore.manual.componentList = componentList
+  museschoolStore.exportManual = false
+  router.push({ name: "manual-preview" })
+}
 
+//导出手册
+function manualExportHandler() {
+  museschoolStore.manual.id = id.value
+  museschoolStore.manual.componentList = componentList
+  museschoolStore.exportManual = true
+  router.push({ name: "manual-preview" })
+}
+
+//上传手册
+function manualUploadHandler() {
+  //此处应该加上判断是否为第一次报错（insert/update）
+  // saveResearchList(title.value, componentList)
+  //   .then((res: any) => {
+  //     console.log(res)
+  //   })
+  //   .catch((err: any) => {
+  //     console.error(err)
+  //   })
+  // const id = 1
+  // updateResearchListById(id, title.value, componentList)
+  //   .then((res: any) => {
+  //     console.log(res)
+  //   })
+  //   .catch((err: any) => {
+  //     console.error(err)
+  //   })
+  getResearchListById({ id: 1 })
+    .then((res: any) => {
+      console.log(res)
+    })
+    .catch((err: any) => {
+      console.error(err)
+    })
+}
+
+//清空手册
+function manualClearHandler() {
+  componentList.splice(0)
+  setManual({
+    id: id.value,
+    title: title.value,
+    componentList: []
+  })
+}
+
+/* 组件渲染相关 ********************************************************************************************/
 //添加组件应修改
 //1.generalComponent
 //2.prototypeComponentList原型组件列表
@@ -83,6 +90,84 @@ const mouseXY = { x: 0, y: 0 } //监测鼠标位置
 //5.监听表单变化
 //6.添加组件函数中的switch
 
+const designZoneRef = ref(null) //设计区域组件引用
+const componentList = museschoolStore.manual.componentList //组件列表
+
+//gridlayout列数，行高
+const colNum = ref(50)
+const rowHeight = ref(10)
+
+/* 组件选择相关 ********************************************************************************************/
+const chosenComponent = ref(-1) //当前选择的组件index
+
+watch(chosenComponent, (newChosenComponent) => {
+  chosenEditorTab.value = 0
+  textContentEditorVisible.value = false
+  fontSizeEditorVisible.value = false
+  fontWeightEditorVisible.value = false
+  fontColorEditorVisible.value = false
+  UrlEditorVisible.value = false
+  backgroundColorEditorVisible.value = false
+  if (newChosenComponent != -1) {
+    x.value = componentList[newChosenComponent].x
+    y.value = componentList[newChosenComponent].y
+    w.value = componentList[newChosenComponent].w
+    h.value = componentList[newChosenComponent].h
+    minW.value = componentList[newChosenComponent].minW
+    maxW.value = componentList[newChosenComponent].maxW
+    minH.value = componentList[newChosenComponent].minH
+    maxH.value = componentList[newChosenComponent].maxH
+    //更改右侧编辑区域显示内容,修改表单placeholder
+    switch (componentList[newChosenComponent].type) {
+      case 0:
+        textContentEditorVisible.value = true
+        textContent.value = componentList[newChosenComponent].componentProps?.content || ""
+        fontSizeEditorVisible.value = true
+        fontSize.value = parseInt(componentList[newChosenComponent].componentProps?.fontSize || "16")
+        fontWeightEditorVisible.value = true
+        fontWeight.value = componentList[newChosenComponent].componentProps?.fontWeight || "normal"
+        fontColorEditorVisible.value = true
+        fontColor.value = componentList[newChosenComponent].componentProps?.color || "#000000"
+        backgroundColorEditorVisible.value = true
+        backgroundColor.value = componentList[newChosenComponent].componentProps?.background || "#ffffff"
+        break
+      case 1:
+        UrlEditorVisible.value = true
+        UrlProps.value = componentList[newChosenComponent].componentProps?.url || ""
+        backgroundColorEditorVisible.value = true
+        backgroundColor.value = componentList[newChosenComponent].componentProps?.background || "#ffffff"
+        break
+      case 2:
+        UrlEditorVisible.value = true
+        UrlProps.value = componentList[newChosenComponent].componentProps?.url || ""
+        backgroundColorEditorVisible.value = true
+        backgroundColor.value = componentList[newChosenComponent].componentProps?.background || "#ffffff"
+        break
+    }
+  }
+})
+
+//选择组件
+function chooseComponentHandler(i: string) {
+  chosenComponent.value = componentList.findIndex(function (item) {
+    return item.i == i
+  })
+}
+
+/* 原型组件区（左侧区域）Tab相关 ********************************************************************************************/
+const chosenComponentsTab = ref(0)
+const componentsTabColor = "color: #6f6f6f;background:#313338"
+const activeComponentsTabColor = "color: #ffffff"
+
+//tab-btn组件引用
+const componentsTabBtn0Ref = ref(null)
+const componentsTabBtn1Ref = ref(null)
+const componentsTabBtn2Ref = ref(null)
+const componentsTabBtn3Ref = ref(null)
+const componentsTabBtn4Ref = ref(null)
+const componentsTabBrBtnRef = ref(null)
+
+/* 组件增删相关 ********************************************************************************************/
 //原型组件列表
 const prototypeComponentList = reactive([
   {
@@ -107,188 +192,12 @@ const prototypeComponentList = reactive([
     }
   }
 ])
-
-//新增组件的id
-const maxId = ref(1)
-
-//组件列表
-const componentList = museschoolStore.manual.componentList
-
-onMounted(() => {
-  //若componentList为空，尝试从本地存储获取数据
-  if (componentList.length == 0) {
-    const storedComponentList = getManual().componentList
-    if (storedComponentList.length > 0) {
-      maxId.value = parseInt(storedComponentList[storedComponentList.length - 1].i) + 1
-      if (storedComponentList) {
-        for (let i = 0; i < storedComponentList.length; i++) {
-          componentList.push(storedComponentList[i])
-        }
-      }
-    }
-  } else {
-    maxId.value = parseInt(componentList[componentList.length - 1].i) + 1
-  }
-
-  //计算行高
-  resizeHandler()
-
-  //默认为组件tab
-  changeComponentsTab(0)
-
-  //添加页面窗口大小监听器
-  window.addEventListener("resize", resizeHandler)
-  //添加鼠标位置监听器
-  document.addEventListener("dragover", dragoverHandler)
-  //添加unload监听器，持久化存储manual
-  window.addEventListener("beforeunload", beforeunloadHandler)
-})
-
-onUnmounted(() => {
-  //持久化存储manual
-  setManual({ id: -1, title: title.value, componentList: componentList })
-
-  //移除页面窗口大小监听器
-  window.removeEventListener("resize", resizeHandler)
-  //移除鼠标位置监听器
-  document.removeEventListener("dragover", dragoverHandler)
-  //移除unload监听器
-  window.removeEventListener("beforeunload", beforeunloadHandler)
-})
-
-//监听选择组件变化
-watch(chosenComponent, (newChosenComponent) => {
-  chosenEditorTab.value = 0
-  showTextContentEditor.value = false
-  showFontSizeEditor.value = false
-  showFontWeightEditor.value = false
-  showFontColorEditor.value = false
-  showURLEditor.value = false
-  showBackgroundColorEditor.value = false
-  if (newChosenComponent != -1) {
-    x.value = componentList[newChosenComponent].x
-    y.value = componentList[newChosenComponent].y
-    w.value = componentList[newChosenComponent].w
-    h.value = componentList[newChosenComponent].h
-    minW.value = componentList[newChosenComponent].minW
-    maxW.value = componentList[newChosenComponent].maxW
-    minH.value = componentList[newChosenComponent].minH
-    maxH.value = componentList[newChosenComponent].maxH
-    //更改右侧编辑区域显示内容,修改表单placeholder
-    switch (componentList[newChosenComponent].type) {
-      case 0:
-        showTextContentEditor.value = true
-        textContent.value = componentList[newChosenComponent].componentProps?.content || ""
-        showFontSizeEditor.value = true
-        fontSize.value = parseInt(componentList[newChosenComponent].componentProps?.fontSize || "16")
-        showFontWeightEditor.value = true
-        fontWeight.value = componentList[newChosenComponent].componentProps?.fontWeight || "normal"
-        showFontColorEditor.value = true
-        fontColor.value = componentList[newChosenComponent].componentProps?.color || "#000000"
-        showBackgroundColorEditor.value = true
-        backgroundColor.value = componentList[newChosenComponent].componentProps?.background || "#ffffff"
-        break
-      case 1:
-        showURLEditor.value = true
-        URL.value = componentList[newChosenComponent].componentProps?.url || ""
-        showBackgroundColorEditor.value = true
-        backgroundColor.value = componentList[newChosenComponent].componentProps?.background || "#ffffff"
-        break
-      case 2:
-        showURLEditor.value = true
-        URL.value = componentList[newChosenComponent].componentProps?.url || ""
-        showBackgroundColorEditor.value = true
-        backgroundColor.value = componentList[newChosenComponent].componentProps?.background || "#ffffff"
-        break
-    }
-  }
-})
-
-//监听表单变化
-watch(textContent, (newTextContent) => {
-  componentList[chosenComponent.value].componentProps!.content = newTextContent
-})
-watch(fontSize, (newFontSize) => {
-  componentList[chosenComponent.value].componentProps!.fontSize = newFontSize.toString()
-})
-watch(fontWeight, (newFontWeight) => {
-  componentList[chosenComponent.value].componentProps!.fontWeight = newFontWeight
-})
-watch(fontColor, (newFontColor) => {
-  componentList[chosenComponent.value].componentProps!.color = newFontColor
-})
-watch(backgroundColor, (newBackgroundColor) => {
-  componentList[chosenComponent.value].componentProps!.background = newBackgroundColor
-})
-watch(URL, (newURL) => {
-  componentList[chosenComponent.value].componentProps!.url = newURL
-})
-watch(x, (newX) => {
-  componentList[chosenComponent.value].x = newX
-})
-watch(y, (newY) => {
-  componentList[chosenComponent.value].y = newY
-})
-watch(w, (newW) => {
-  componentList[chosenComponent.value].w = newW
-})
-watch(h, (newH) => {
-  componentList[chosenComponent.value].h = newH
-})
-watch(minW, (newMinW) => {
-  componentList[chosenComponent.value].minW = newMinW
-})
-watch(maxW, (newMaxW) => {
-  componentList[chosenComponent.value].maxW = newMaxW
-})
-watch(minH, (newMinH) => {
-  componentList[chosenComponent.value].minH = newMinH
-})
-watch(maxH, (newMaxH) => {
-  componentList[chosenComponent.value].maxH = newMaxH
-})
-
-//unload之前持久化存储manual
-function beforeunloadHandler() {
-  setManual({ id: -1, title: title.value, componentList: componentList })
-}
-
-//鼠标拖动组件时获取鼠标位置
-function dragoverHandler(e: { clientX: number; clientY: number }) {
-  mouseXY.x = e.clientX
-  mouseXY.y = e.clientY
-}
-
-//监听页面窗口大小变化，重新计算行高
-function resizeHandler() {
-  rowHeight.value = (designZone.value as unknown as HTMLElement).getBoundingClientRect().width / colNum.value
-}
-
-//更改组件位置时同步修改表单值
-function componentMoveHandler(i: string, newX: number, newY: number) {
-  chooseComponent(i)
-  x.value = newX
-  y.value = newY
-}
-
-//更改组件大小时同步修改表单值
-function componentResizeHandler(i: string, newW: number, newH: number) {
-  w.value = newW
-  h.value = newH
-}
-
-//修改标题
-function changeTitle() {
-  showTitleEditor.value = !showTitleEditor.value
-  if (!showTitleEditor.value) {
-    museschoolStore.manual.title = title.value
-  }
-}
+const mouseXY = { x: 0, y: 0 } //监测鼠标位置
+const nextId = ref(1) //下一个新增组件的id
 
 //拖拽添加组件
-function addComponent(index: number) {
-  const parentRect = (designZone.value as unknown as HTMLElement).getBoundingClientRect()
-
+function addComponentHandler(index: number) {
+  const parentRect = (designZoneRef.value as unknown as HTMLElement).getBoundingClientRect()
   if (
     mouseXY.x > parentRect.left &&
     mouseXY.x < parentRect.right &&
@@ -319,9 +228,8 @@ function addComponent(index: number) {
         }
         break
     }
-
     const component: Component = {
-      i: maxId.value.toString(),
+      i: nextId.value.toString(),
       x: Math.trunc((mouseXY.x - parentRect.left) / (parentRect.width / colNum.value)),
       y: Math.trunc((mouseXY.y - parentRect.top) / rowHeight.value),
       w: 10,
@@ -333,14 +241,14 @@ function addComponent(index: number) {
       type: index,
       componentProps: componentProps!
     }
-    maxId.value++
+    nextId.value++
     chosenComponent.value = componentList.length
     componentList.push(component)
   }
 }
 
 //删除组件
-function deleteComponent(i: string) {
+function deleteComponentHandler(i: string) {
   const index = componentList.findIndex(function (item) {
     return item.i == i
   })
@@ -358,91 +266,90 @@ function deleteComponent(i: string) {
   }
 }
 
-//选择组件
-function chooseComponent(i: string) {
-  chosenComponent.value = componentList.findIndex(function (item) {
-    return item.i == i
+/* 文件上传相关 ********************************************************************************************/
+//文件类型Tab相关
+const chosenFileTab = ref(0)
+const fileTabColor = "border-bottom: 2px solid #4A505E"
+const activeFileTabColor = "border-bottom: 2px solid #6896FC"
+
+const uploadedImages: MuseschoolImage[] = reactive([]) //已上传的图片
+const uploadDialogVisible = ref(false)
+const fileUrl = ref("")
+const fileList = ref<any[]>([])
+const previewPicDialogVisible = ref(false)
+const previewImage = ref("")
+
+//文件修改处理
+function fileChangeHandler(_file: any, _fileList: any) {
+  if (_file) {
+    const extension = _file.name.substring(_file.name.lastIndexOf(".") + 1)
+    const size = _file.size / 1024 / 1024
+    if (extension !== "jpg" && extension !== "png" && extension !== "jpeg") {
+      ElMessage.warning("请上传后缀名为.jpg或.jpeg或.png的图片")
+    }
+    if (size > 20) {
+      ElMessage.warning("文件大小请不要超过20MB")
+    }
+    fileList.value.push(_file.raw)
+  }
+}
+
+//文件超出限制处理
+function fileExceedHandler(_files: any, _fileList: any) {
+  ElMessage.warning("很抱歉,只能上传5张图片")
+}
+
+//文件预览处理
+function filePreviewHandler(_file: any) {
+  previewImage.value = _file.url
+  previewPicDialogVisible.value = true
+}
+
+//文件移除处理
+function fileRemoveHandler(_file: any, _fileList: any) {
+  _fileList.forEach(function (item: any) {
+    if (item === _file) {
+      _fileList.splice(_fileList.indexOf(item), 1)
+    }
   })
+  fileList.value = _fileList
+  // uploadedImages = _fileList
 }
 
-//预览手册
-function toManualPreview() {
-  museschoolStore.manual.componentList = componentList
-  museschoolStore.exportManual = false
-  router.push({ name: "manual-preview" })
+//上传文件前的钩子
+function beforeUploadFileHandler(_file: any) {
+  fileUrl.value = URL.createObjectURL(_file)
+  return false
 }
 
-//导出手册
-function exportManual() {
-  museschoolStore.manual.componentList = componentList
-  museschoolStore.exportManual = true
-  router.push({ name: "manual-preview" })
-}
+//上传文件
+function fileUploadHandler() {}
 
-//上传手册
-function uploadManual() {
-  //此处应该加上判断是否为第一次报错（insert/update）
-  // saveResearchList(title.value, componentList)
-  //   .then((res: any) => {
-  //     console.log(res)
-  //   })
-  //   .catch((err: any) => {
-  //     console.error(err)
-  //   })
-  // const id = 1
-  // updateResearchListById(id, title.value, componentList)
-  //   .then((res: any) => {
-  //     console.log(res)
-  //   })
-  //   .catch((err: any) => {
-  //     console.error(err)
-  //   })
-  getResearchListById({ id: 1 })
-    .then((res: any) => {
-      console.log(res)
-    })
-    .catch((err: any) => {
-      console.error(err)
-    })
-}
-
-//清空手册
-function clearManual() {
-  componentList.splice(0)
-  setManual({
-    id: -1,
-    title: title.value,
-    componentList: []
-  })
-}
-
-//修改编辑区域Tab
-function changeEditorTab(i: number) {
-  chosenEditorTab.value = i
-}
+/* 组件参数修改区（右侧区域）Tab相关 ********************************************************************************************/
+const chosenEditorTab = ref(0)
+const editorTabColor = "color: #6f6f6f;border-bottom: 2px solid #e4e4e4"
+const activeEditorTabColor = "color: #326EF2;border-bottom: 2px solid #326EF2"
 
 //修改组件区域Tab
-function changeComponentsTab(i: number) {
+function componentsTabChangeHandler(i: number) {
   chosenComponentsTab.value = i
-
   // 清空tab-btn圆角属性
-  const c0 = componentsTab0.value as unknown as HTMLElement
+  const c0 = componentsTabBtn0Ref.value as unknown as HTMLElement
   c0.classList.remove("rounded-bottom-right")
-  const c1 = componentsTab1.value as unknown as HTMLElement
+  const c1 = componentsTabBtn1Ref.value as unknown as HTMLElement
   c1.classList.remove("rounded-top-right")
   c1.classList.remove("rounded-bottom-right")
-  const c2 = componentsTab2.value as unknown as HTMLElement
+  const c2 = componentsTabBtn2Ref.value as unknown as HTMLElement
   c2.classList.remove("rounded-top-right")
   c2.classList.remove("rounded-bottom-right")
-  const c3 = componentsTab3.value as unknown as HTMLElement
+  const c3 = componentsTabBtn3Ref.value as unknown as HTMLElement
   c3.classList.remove("rounded-top-right")
   c3.classList.remove("rounded-bottom-right")
-  const c4 = componentsTab4.value as unknown as HTMLElement
+  const c4 = componentsTabBtn4Ref.value as unknown as HTMLElement
   c4.classList.remove("rounded-top-right")
   c4.classList.remove("rounded-bottom-right")
-  const cbr = componentsTabBr.value as unknown as HTMLElement
+  const cbr = componentsTabBrBtnRef.value as unknown as HTMLElement
   cbr.classList.remove("rounded-top-right")
-
   //根据当前选中的tab修改圆角属性
   switch (i) {
     case 0:
@@ -466,13 +373,177 @@ function changeComponentsTab(i: number) {
       break
   }
 }
+
+/* 组件参数修改相关 ********************************************************************************************/
+//填充与线条
+//文本颜色
+const fontColor = ref("#000000")
+const fontColorEditorVisible = ref(false)
+//背景颜色
+const backgroundColor = ref("#FFFFFF")
+const backgroundColorEditorVisible = ref(false)
+//监听变化
+watch(fontColor, (newFontColor) => {
+  componentList[chosenComponent.value].componentProps!.color = newFontColor
+})
+watch(backgroundColor, (newBackgroundColor) => {
+  componentList[chosenComponent.value].componentProps!.background = newBackgroundColor
+})
+//效果
+
+//大小与属性
+//位置大小
+const x = ref(1)
+const y = ref(1)
+const w = ref(10)
+const h = ref(10)
+const minW = ref(1)
+const maxW = ref(20)
+const minH = ref(1)
+const maxH = ref(20)
+//监听变化
+watch(x, (newX) => {
+  componentList[chosenComponent.value].x = newX
+})
+watch(y, (newY) => {
+  componentList[chosenComponent.value].y = newY
+})
+watch(w, (newW) => {
+  componentList[chosenComponent.value].w = newW
+})
+watch(h, (newH) => {
+  componentList[chosenComponent.value].h = newH
+})
+watch(minW, (newMinW) => {
+  componentList[chosenComponent.value].minW = newMinW
+})
+watch(maxW, (newMaxW) => {
+  componentList[chosenComponent.value].maxW = newMaxW
+})
+watch(minH, (newMinH) => {
+  componentList[chosenComponent.value].minH = newMinH
+})
+watch(maxH, (newMaxH) => {
+  componentList[chosenComponent.value].maxH = newMaxH
+})
+
+//更改组件位置时同步修改表单值
+function componentMoveHandler(i: string, newX: number, newY: number) {
+  chooseComponentHandler(i)
+  x.value = newX
+  y.value = newY
+}
+
+//更改组件大小时同步修改表单值
+function componentResizeHandler(i: string, newW: number, newH: number) {
+  w.value = newW
+  h.value = newH
+}
+
+//文本内容
+const textContent = ref("")
+const textContentEditorVisible = ref(false)
+//字号
+const fontSize = ref(16)
+const fontSizeEditorVisible = ref(false)
+//字重
+const fontWeight = ref("")
+const fontWeightOptions = reactive([
+  { value: "bold", label: "Bold" },
+  { value: "bolder", label: "Bolder" },
+  { value: "lighter", label: "Lighter" },
+  {
+    value: "normal",
+    label: "normal"
+  }
+])
+const fontWeightEditorVisible = ref(false)
+//Url内容
+const UrlProps = ref("")
+const UrlEditorVisible = ref(false)
+//监听变化
+watch(textContent, (newTextContent) => {
+  componentList[chosenComponent.value].componentProps!.content = newTextContent
+})
+watch(fontSize, (newFontSize) => {
+  componentList[chosenComponent.value].componentProps!.fontSize = newFontSize.toString()
+})
+watch(fontWeight, (newFontWeight) => {
+  componentList[chosenComponent.value].componentProps!.fontWeight = newFontWeight
+})
+watch(UrlProps, (newUrl) => {
+  componentList[chosenComponent.value].componentProps!.url = newUrl
+})
+
+/* 生命周期钩子 ********************************************************************************************/
+onMounted(() => {
+  //若componentList为空，尝试从本地存储获取数据
+  if (componentList.length == 0) {
+    const storedComponentList = getManual().componentList
+    if (storedComponentList.length > 0) {
+      nextId.value = parseInt(storedComponentList[storedComponentList.length - 1].i) + 1
+      if (storedComponentList) {
+        for (let i = 0; i < storedComponentList.length; i++) {
+          componentList.push(storedComponentList[i])
+        }
+      }
+    }
+  } else {
+    nextId.value = parseInt(componentList[componentList.length - 1].i) + 1
+  }
+  //若id为负，尝试从本地存储获取数据
+  if (id.value < 0) {
+    if (getManual().id > 0) {
+      id.value = getManual().id
+    }
+  }
+  //若uploadedImages为空，尝试从本地存储获取数据
+  if (uploadedImages.length == 0) {
+    const storedImages: MuseschoolImage[] = getUploadedImages()
+    if (storedImages.length > 0) {
+      for (let i = 0; i < storedImages.length; i++) {
+        uploadedImages.push(storedImages[i])
+      }
+    }
+  }
+  resizeHandler() //计算行高
+  componentsTabChangeHandler(0) //默认为组件tab
+  window.addEventListener("resize", resizeHandler) //添加页面窗口大小监听器
+  document.addEventListener("dragover", dragoverHandler) //添加鼠标位置监听器
+  window.addEventListener("beforeunload", beforeunloadHandler) //添加unload监听器，持久化存储manual
+})
+
+onUnmounted(() => {
+  setManual({ id: id.value, title: title.value, componentList: componentList }) //持久化存储manual
+  setUploadedImages(uploadedImages) //持久化存储uploadedImages
+  window.removeEventListener("resize", resizeHandler) //移除页面窗口大小监听器
+  document.removeEventListener("dragover", dragoverHandler) //移除鼠标位置监听器
+  window.removeEventListener("beforeunload", beforeunloadHandler) //移除unload监听器
+})
+
+//监听页面窗口大小变化，重新计算行高
+function resizeHandler() {
+  rowHeight.value = (designZoneRef.value as unknown as HTMLElement).getBoundingClientRect().width / colNum.value
+}
+
+//鼠标拖动组件时获取鼠标位置
+function dragoverHandler(e: { clientX: number; clientY: number }) {
+  mouseXY.x = e.clientX
+  mouseXY.y = e.clientY
+}
+
+//unload之前持久化存储
+function beforeunloadHandler() {
+  setManual({ id: id.value, title: title.value, componentList: componentList }) //持久化存储manual
+  setUploadedImages(uploadedImages) //持久化存储uploadedImages
+}
 </script>
 
 <template>
   <div class="app-container">
     <div class="header">
       <div class="logo">
-        <el-image :src="museschool" style="height: 80%">
+        <el-image :src="museschool_logo" style="height: 80%">
           <template #error>
             <div class="image-slot">
               <el-icon>
@@ -483,68 +554,67 @@ function changeComponentsTab(i: number) {
         </el-image>
         <span>Museschool</span>
       </div>
-      <!--      <div>undo-redo</div>-->
-      <div class="title" @click="changeTitle">{{ title }}</div>
-      <div v-if="showTitleEditor" class="titleForm">
+      <div class="title" @click="titleChangeHandler">{{ title }}</div>
+      <div v-if="titleEditorVisible" class="titleForm">
         <el-input v-model="title" :placeholder="title" style="width: 70%" />
-        <el-button color="#2565F1" @click="changeTitle">修改</el-button>
+        <el-button color="#2565F1" @click="titleChangeHandler">修改</el-button>
       </div>
-      <div class="show-export">
-        <el-button color="#2565F1" icon="Monitor" @click="toManualPreview">预览</el-button>
-        <el-button color="#FFFFFF" icon="Download" @click="exportManual">导出</el-button>
-        <el-button color="#2565F1" icon="Upload" @click="uploadManual">上传</el-button>
-        <el-button icon="Delete" theme="danger" @click="clearManual">清空</el-button>
+      <div class="header-btn">
+        <el-button color="#2565F1" icon="Monitor" @click="manualPreviewHandler">预览</el-button>
+        <el-button color="#FFFFFF" icon="Download" @click="manualExportHandler">导出</el-button>
+        <el-button color="#2565F1" icon="Upload" @click="manualUploadHandler">上传</el-button>
+        <el-button icon="Delete" theme="danger" @click="manualClearHandler">清空</el-button>
       </div>
     </div>
     <div class="main">
       <div class="prototype-components">
         <div class="components-tab-bar">
           <div
-            ref="componentsTab0"
+            ref="componentsTabBtn0Ref"
             :style="chosenComponentsTab === 0 ? activeComponentsTabColor : componentsTabColor"
             class="components-tab-btn"
-            @click="changeComponentsTab(0)"
+            @click="componentsTabChangeHandler(0)"
           >
             <svg-icon class="components-tab-icon" name="component" />
             组件
           </div>
           <div
-            ref="componentsTab1"
+            ref="componentsTabBtn1Ref"
             :style="chosenComponentsTab === 1 ? activeComponentsTabColor : componentsTabColor"
             class="components-tab-btn"
-            @click="changeComponentsTab(1)"
+            @click="componentsTabChangeHandler(1)"
           >
             <svg-icon class="components-tab-icon" name="template" />
             模板
           </div>
           <div
-            ref="componentsTab2"
+            ref="componentsTabBtn2Ref"
             :style="chosenComponentsTab === 2 ? activeComponentsTabColor : componentsTabColor"
             class="components-tab-btn"
-            @click="changeComponentsTab(2)"
+            @click="componentsTabChangeHandler(2)"
           >
             <svg-icon class="components-tab-icon" name="upload" />
             已上传
           </div>
           <div
-            ref="componentsTab3"
+            ref="componentsTabBtn3Ref"
             :style="chosenComponentsTab === 3 ? activeComponentsTabColor : componentsTabColor"
             class="components-tab-btn"
-            @click="changeComponentsTab(3)"
+            @click="componentsTabChangeHandler(3)"
           >
             <svg-icon class="components-tab-icon" name="text" />
             文本
           </div>
           <div
-            ref="componentsTab4"
+            ref="componentsTabBtn4Ref"
             :style="chosenComponentsTab === 4 ? activeComponentsTabColor : componentsTabColor"
             class="components-tab-btn"
-            @click="changeComponentsTab(4)"
+            @click="componentsTabChangeHandler(4)"
           >
             <svg-icon class="components-tab-icon" name="material" />
             素材
           </div>
-          <div ref="componentsTabBr" style="width: 100%; height: 50%; background: #313338" />
+          <div ref="componentsTabBrBtnRef" style="width: 100%; height: 50%; background: #313338" />
         </div>
         <div v-if="chosenComponentsTab === 0" class="components-tab">
           <div
@@ -552,7 +622,7 @@ function changeComponentsTab(i: number) {
             :key="item.i"
             class="droppable-element"
             draggable="true"
-            @dragend="addComponent(index)"
+            @dragend="addComponentHandler(index)"
           >
             <general-component
               :component-props="item.componentProps"
@@ -564,12 +634,88 @@ function changeComponentsTab(i: number) {
           </div>
         </div>
         <div v-if="chosenComponentsTab === 1" class="components-tab">模版</div>
-        <div v-if="chosenComponentsTab === 2" class="components-tab">已上传</div>
-
+        <div v-if="chosenComponentsTab === 2" class="components-tab">
+          <el-form style="width: 100%">
+            <el-form-item>
+              <el-input placeholder="搜索已上传的图片/视频/音频" prefix-icon="Search" />
+            </el-form-item>
+          </el-form>
+          <el-button
+            color="#386DE4"
+            style="width: 100%; margin-top: 5%; margin-bottom: 5%"
+            @click="uploadDialogVisible = true"
+          >
+            上传文件
+          </el-button>
+          <el-dialog v-model="uploadDialogVisible" title="上传文件">
+            <!--            现在上传的文件默认是图片，后续要进行判断并区分处理，注意下方el-upload的修改-->
+            <el-form>
+              <el-form-item>
+                <el-upload
+                  :auto-upload="false"
+                  :before-upload="beforeUploadFileHandler"
+                  :file-list="fileList"
+                  :limit="5"
+                  :multiple="true"
+                  :on-change="fileChangeHandler"
+                  :on-exceed="fileExceedHandler"
+                  :on-preview="filePreviewHandler"
+                  :on-remove="fileRemoveHandler"
+                  accept=".jpg,.png,.jpeg,.JPG,.JPEG"
+                  action="#"
+                  class="uploader"
+                  list-type="picture-card"
+                >
+                  <el-icon>
+                    <Plus />
+                  </el-icon>
+                </el-upload>
+              </el-form-item>
+            </el-form>
+            <el-dialog
+              v-model="previewPicDialogVisible"
+              style="display: block"
+              width="50%"
+              @close="previewPicDialogVisible = false"
+            >
+              <el-image :src="previewImage" style="margin: auto" />
+            </el-dialog>
+            <template #footer>
+              <el-button type="primary" @click="fileUploadHandler">确认</el-button>
+              <el-button @click="uploadDialogVisible = false">取消</el-button>
+            </template>
+          </el-dialog>
+          <div class="file-tab-bar">
+            <div
+              :style="chosenFileTab === 0 ? activeFileTabColor : fileTabColor"
+              class="file-tab-btn"
+              @click="chosenFileTab = 0"
+            >
+              图片
+            </div>
+            <div
+              :style="chosenFileTab === 1 ? activeFileTabColor : fileTabColor"
+              class="file-tab-btn"
+              @click="chosenFileTab = 1"
+            >
+              视频
+            </div>
+            <div
+              :style="chosenFileTab === 2 ? activeFileTabColor : fileTabColor"
+              class="file-tab-btn"
+              @click="chosenFileTab = 2"
+            >
+              音频
+            </div>
+          </div>
+          <div v-if="chosenFileTab === 0" class="file-tab">图片</div>
+          <div v-if="chosenFileTab === 1" class="file-tab">视频</div>
+          <div v-if="chosenFileTab === 2" class="file-tab">音频</div>
+        </div>
         <div v-if="chosenComponentsTab === 3" class="components-tab">文本</div>
         <div v-if="chosenComponentsTab === 4" class="components-tab">素材</div>
       </div>
-      <div ref="designZone" class="design-zone">
+      <div ref="designZoneRef" class="design-zone">
         <grid-layout
           :col-num="colNum"
           :layout="componentList"
@@ -601,8 +747,8 @@ function changeComponentsTab(i: number) {
               :showDelete="true"
               :type="item.type"
               style="background: transparent"
-              @delete-component="deleteComponent"
-              @choose-component="chooseComponent"
+              @delete-component="deleteComponentHandler"
+              @choose-component="chooseComponentHandler"
             />
           </grid-item>
         </grid-layout>
@@ -612,7 +758,7 @@ function changeComponentsTab(i: number) {
           <div
             :style="chosenEditorTab === 0 ? activeEditorTabColor : editorTabColor"
             class="editor-tab-btn"
-            @click="changeEditorTab(0)"
+            @click="chosenEditorTab = 0"
           >
             <el-icon size="25">
               <Edit />
@@ -622,7 +768,7 @@ function changeComponentsTab(i: number) {
           <div
             :style="chosenEditorTab === 1 ? activeEditorTabColor : editorTabColor"
             class="editor-tab-btn"
-            @click="changeEditorTab(1)"
+            @click="chosenEditorTab = 1"
           >
             <el-icon size="25">
               <MagicStick />
@@ -632,7 +778,7 @@ function changeComponentsTab(i: number) {
           <div
             :style="chosenEditorTab === 2 ? activeEditorTabColor : editorTabColor"
             class="editor-tab-btn"
-            @click="changeEditorTab(2)"
+            @click="chosenEditorTab = 2"
           >
             <el-icon size="25">
               <Operation />
@@ -641,12 +787,12 @@ function changeComponentsTab(i: number) {
           </div>
         </div>
         <div v-if="chosenEditorTab === 0" class="editor-tab">
-          <div v-if="showFontColorEditor || showBackgroundColorEditor" class="editor-form">
-            <div v-if="showFontColorEditor">
+          <div v-if="fontColorEditorVisible || backgroundColorEditorVisible" class="editor-form">
+            <div v-if="fontColorEditorVisible">
               <span>文本颜色 </span>
               <el-color-picker v-model="fontColor" show-alpha />
             </div>
-            <div v-if="showBackgroundColorEditor">
+            <div v-if="backgroundColorEditorVisible">
               <span>背景颜色 </span>
               <el-color-picker v-model="backgroundColor" show-alpha />
             </div>
@@ -756,19 +902,19 @@ function changeComponentsTab(i: number) {
               />
             </div>
           </div>
-          <div v-if="showTextContentEditor" class="editor-form">
+          <div v-if="textContentEditorVisible" class="editor-form">
             <span>文本内容</span>
           </div>
-          <div v-if="showTextContentEditor" class="editor-form">
+          <div v-if="textContentEditorVisible" class="editor-form">
             <el-input v-model="textContent" :placeholder="textContent" autosize type="textarea" />
           </div>
-          <div v-if="showURLEditor" class="editor-form">
+          <div v-if="UrlEditorVisible" class="editor-form">
             <div style="width: 11.5%; margin-right: 2.4%">URL</div>
-            <el-input v-model="URL" :placeholder="textContent" />
+            <el-input v-model="UrlProps" :placeholder="textContent" />
           </div>
-          <div v-if="showFontSizeEditor || showFontWeightEditor" class="editor-form">
+          <div v-if="fontSizeEditorVisible || fontWeightEditorVisible" class="editor-form">
             <el-input-number
-              v-if="showFontSizeEditor"
+              v-if="fontSizeEditorVisible"
               v-model="fontSize"
               :max="300"
               :min="12"
@@ -777,7 +923,7 @@ function changeComponentsTab(i: number) {
               controls-position="right"
               style="margin-right: 5%"
             />
-            <el-select v-if="showFontWeightEditor" v-model="fontWeight" :placeholder="fontWeight">
+            <el-select v-if="fontWeightEditorVisible" v-model="fontWeight" :placeholder="fontWeight">
               <el-option v-for="item in fontWeightOptions" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </div>
@@ -843,7 +989,7 @@ function changeComponentsTab(i: number) {
       justify-content: space-around;
     }
 
-    .show-export {
+    .header-btn {
       display: flex;
       flex-direction: row;
       align-items: center;
@@ -900,6 +1046,7 @@ function changeComponentsTab(i: number) {
       .components-tab {
         width: 82%;
         height: 100%;
+        padding: 5%;
         overflow-y: scroll;
         display: flex;
         flex-direction: column;
@@ -908,6 +1055,33 @@ function changeComponentsTab(i: number) {
         .droppable-element {
           width: 60%;
           margin-top: 5%;
+        }
+
+        .file-tab-bar {
+          width: 100%;
+          height: 5%;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+
+          .file-tab-btn {
+            width: 30%;
+            height: 100%;
+            font-size: 20px;
+            color: white;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+          }
+        }
+
+        .file-tab {
+          width: 100%;
+          height: 80%;
+          margin-top: 5%;
+          overflow-y: scroll;
         }
       }
     }
