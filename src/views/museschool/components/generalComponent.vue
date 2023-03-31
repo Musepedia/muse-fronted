@@ -3,7 +3,6 @@ import { computed, markRaw, ref } from "vue"
 import museText from "./museText.vue"
 import museImage from "./museImage.vue"
 import museAudio from "./museAudio.vue"
-import museBackground from "./museBackground.vue"
 import { Close } from "@element-plus/icons-vue"
 
 //组件参数
@@ -15,7 +14,7 @@ const props = defineProps(["showDelete", "i", "type", "componentProps"])
 //2.import
 
 //已开发的组件列表，此数组的索引即为组件的type字段
-const componentList = markRaw([museText, museImage, museAudio, museBackground])
+const componentList = markRaw([museText, museImage, museAudio])
 const currentComponent = computed(() => {
   return componentList[props.type]
 })
@@ -39,12 +38,12 @@ function showDeleteBtn() {
       :componentProps="props.componentProps"
       :i="props.i"
       class="the-component"
-      @click="$emit('chooseComponent', props.i)"
+      @click="$emit('chooseComponent')"
     />
     <Close
       v-if="showDelete"
       style="width: 1em; height: 1em; position: absolute; top: 0; right: 0; color: rgb(200, 200, 200)"
-      @click="$emit('deleteComponent', props.i)"
+      @click="$emit('deleteComponent')"
     />
   </div>
 </template>

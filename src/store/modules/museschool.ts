@@ -1,10 +1,14 @@
 import store from "@/store"
 import { defineStore } from "pinia"
-import { Manual } from "museschool"
+import { MuseManual } from "museschool"
 import { reactive, ref } from "vue"
 
 export const useMuseschoolStore = defineStore("Museschool", () => {
-  const manual: Manual = reactive({ id: -1, title: "-1", componentList: [] })
+  const manual: MuseManual = reactive({
+    id: -1,
+    title: "-1",
+    pages: [{ page: 0, background: "background:white", componentList: [] }]
+  })
   const exportManual = ref()
   return { manual, exportManual }
 })

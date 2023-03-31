@@ -2,7 +2,7 @@
 
 import CacheKey from "@/constants/cacheKey"
 import { type ThemeName } from "@/hooks/useTheme"
-import { Manual, MuseschoolImage } from "museschool"
+import { MuseImage, MuseManual } from "museschool"
 
 export const getSidebarStatus = () => {
   return localStorage.getItem(CacheKey.SIDEBAR_STATUS)
@@ -20,10 +20,16 @@ export const setActiveThemeName = (themeName: ThemeName) => {
 
 export const getManual = () => {
   const data = localStorage.getItem(CacheKey.MANUAL)
-  return data ? JSON.parse(data) : { id: null, title: null, componentList: [] }
+  return data
+    ? JSON.parse(data)
+    : {
+        id: -1,
+        title: "研学清单标题",
+        pages: [{ page: 0, background: "background:white", componentList: [] }]
+      }
 }
 
-export const setManual = (manual: Manual) => {
+export const setManual = (manual: MuseManual) => {
   localStorage.setItem(CacheKey.MANUAL, JSON.stringify(manual))
 }
 
@@ -32,6 +38,6 @@ export const getUploadedImages = () => {
   return data ? JSON.parse(data) : []
 }
 
-export const setUploadedImages = (images: MuseschoolImage[]) => {
+export const setUploadedImages = (images: MuseImage[]) => {
   localStorage.setItem(CacheKey.UPLOADEDIMAGES, JSON.stringify(images))
 }

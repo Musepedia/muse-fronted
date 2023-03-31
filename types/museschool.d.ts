@@ -1,6 +1,20 @@
 declare module "museschool" {
+  //研学清单类型
+  interface MuseManual {
+    id: number
+    title: string
+    pages: MusePage[]
+  }
+
+  //研学清单页面类型
+  interface MusePage {
+    page: number
+    background: string
+    componentList: MuseComponent[]
+  }
+
   //组件类型
-  interface Component {
+  interface MuseComponent {
     i: string
     x: number
     y: number
@@ -21,15 +35,8 @@ declare module "museschool" {
     }
   }
 
-  //研学清单类型
-  interface Manual {
-    id: number
-    title: string
-    componentList: Component[]
-  }
-
   //图片类型
-  interface MuseschoolImage {
+  interface MuseImage {
     url: string
   }
 }

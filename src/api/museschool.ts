@@ -1,5 +1,5 @@
 import { request } from "@/utils/museschoolService"
-import { Component } from "museschool"
+import { MuseComponent } from "museschool"
 
 //saveLocation接口数据
 export interface saveLocationData {
@@ -59,7 +59,7 @@ export function saveLocation(data: saveLocationData) {
 }
 
 //处理请求数据，将componentProps转化为字符串
-function stringifyComponent(id: number, title: string, componentList: Component[]) {
+function stringifyComponent(id: number, title: string, componentList: MuseComponent[]) {
   const stringifiedComponentList: stringifiedComponent[] = []
   for (let i = 0; i < componentList.length; i++) {
     stringifiedComponentList.push({
@@ -94,7 +94,7 @@ function stringifyComponent(id: number, title: string, componentList: Component[
 }
 
 //保存研学清单
-export function saveResearchList(title: string, componentList: Component[]) {
+export function saveResearchList(title: string, componentList: MuseComponent[]) {
   return request({
     url: "/saveResearchList",
     method: "POST",
@@ -103,7 +103,7 @@ export function saveResearchList(title: string, componentList: Component[]) {
 }
 
 //根据id更新研学清单
-export function updateResearchListById(id: number, title: string, componentList: Component[]) {
+export function updateResearchListById(id: number, title: string, componentList: MuseComponent[]) {
   return request({
     url: "/updateResearchListById",
     method: "POST",

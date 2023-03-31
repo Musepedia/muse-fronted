@@ -2,8 +2,7 @@
 import GeneralComponent from "../components/generalComponent.vue"
 import { onMounted, onUnmounted, reactive, ref, watch } from "vue"
 import { useRouter } from "vue-router"
-import { Component, MuseschoolImage } from "museschool"
-import { getResearchListById } from "@/api/museschool"
+import { MuseComponent, MuseImage, MuseManual } from "museschool"
 import { useMuseschoolStore } from "@/store/modules/museschool"
 import { getManual, getUploadedImages, setManual, setUploadedImages } from "@/utils/cache/localStorage"
 import { ElMessage } from "element-plus"
@@ -17,72 +16,6 @@ const router = useRouter()
 const museschoolStore = useMuseschoolStore()
 
 /* 研学手册信息相关 ********************************************************************************************/
-const id = ref(museschoolStore.manual.id) //本研学手册的id
-const title = ref("研学手册标题") //标题
-const titleEditorVisible = ref(false)
-
-//修改标题
-function titleChangeHandler() {
-  titleEditorVisible.value = !titleEditorVisible.value
-  if (!titleEditorVisible.value) {
-    museschoolStore.manual.title = title.value
-  }
-}
-
-//预览手册
-function manualPreviewHandler() {
-  museschoolStore.manual.id = id.value
-  museschoolStore.manual.componentList = componentList
-  museschoolStore.exportManual = false
-  router.push({ name: "manual-preview" })
-}
-
-//导出手册
-function manualExportHandler() {
-  museschoolStore.manual.id = id.value
-  museschoolStore.manual.componentList = componentList
-  museschoolStore.exportManual = true
-  router.push({ name: "manual-preview" })
-}
-
-//上传手册
-function manualUploadHandler() {
-  //此处应该加上判断是否为第一次报错（insert/update）
-  // saveResearchList(title.value, componentList)
-  //   .then((res: any) => {
-  //     console.log(res)
-  //   })
-  //   .catch((err: any) => {
-  //     console.error(err)
-  //   })
-  // const id = 1
-  // updateResearchListById(id, title.value, componentList)
-  //   .then((res: any) => {
-  //     console.log(res)
-  //   })
-  //   .catch((err: any) => {
-  //     console.error(err)
-  //   })
-  getResearchListById({ id: 1 })
-    .then((res: any) => {
-      console.log(res)
-    })
-    .catch((err: any) => {
-      console.error(err)
-    })
-}
-
-//清空手册
-function manualClearHandler() {
-  componentList.splice(0)
-  setManual({
-    id: id.value,
-    title: title.value,
-    componentList: []
-  })
-}
-
-/* 组件渲染相关 ********************************************************************************************/
 //添加组件应修改
 //1.generalComponent
 //2.prototypeComponentList原型组件列表
@@ -90,18 +23,48 @@ function manualClearHandler() {
 //4.选择组件变化监听中的switch(每个选项)
 //5.监听表单变化
 //6.添加组件函数中的switch
+const thisManual: MuseManual = museschoolStore.manual //本页面的研学手册
+const titleEditorVisible = ref(false) //标题表单是否可见
 
 const designZoneRef = ref(null) //设计区域组件引用
-const componentList = museschoolStore.manual.componentList //组件列表
 
 //gridlayout列数，行高
 const colNum = ref(50)
 const rowHeight = ref(10)
 
-/* 组件选择相关 ********************************************************************************************/
-const chosenComponent = ref(-1) //当前选择的组件index
+//监听manual变化，同步修改到museschoolStore
+watch(thisManual, (newThisManual) => {
+  museschoolStore.manual = newThisManual
+})
 
+//跳转到手册预览页
+function navigateToManualPreview(exportManual: boolean) {
+  museschoolStore.exportManual = exportManual
+  router.push({ name: "manual-preview" })
+}
+
+//上传手册
+function manualUploadHandler() {
+  //此处应该加上判断是否为第一次保存（insert/update）
+}
+
+//清空手册
+function manualClearHandler() {
+  thisManual.pages.splice(0)
+  thisManual.pages.push({ page: 0, background: "background:white", componentList: [] })
+  setManual(thisManual)
+}
+
+/* 组件选择相关 ********************************************************************************************/
+//当前选择组件的页码和index
+const chosenComponent = reactive({
+  pageIndex: -1,
+  componentIndex: -1
+})
+
+//监听选择组件的变化
 watch(chosenComponent, (newChosenComponent) => {
+  //选择组件后重置右侧参数编辑区域显示内容
   chosenEditorTab.value = 0
   textContentEditorVisible.value = false
   fontSizeEditorVisible.value = false
@@ -109,50 +72,68 @@ watch(chosenComponent, (newChosenComponent) => {
   fontColorEditorVisible.value = false
   UrlEditorVisible.value = false
   backgroundColorEditorVisible.value = false
-  if (newChosenComponent != -1) {
-    x.value = componentList[newChosenComponent].x
-    y.value = componentList[newChosenComponent].y
-    w.value = componentList[newChosenComponent].w
-    h.value = componentList[newChosenComponent].h
-    minW.value = componentList[newChosenComponent].minW
-    maxW.value = componentList[newChosenComponent].maxW
-    minH.value = componentList[newChosenComponent].minH
-    maxH.value = componentList[newChosenComponent].maxH
+  if (newChosenComponent.pageIndex != -1 && newChosenComponent.componentIndex != -1) {
     //更改右侧编辑区域显示内容,修改表单placeholder
-    switch (componentList[newChosenComponent].type) {
+    x.value = thisManual.pages[newChosenComponent.pageIndex].componentList[newChosenComponent.componentIndex].x
+    y.value = thisManual.pages[newChosenComponent.pageIndex].componentList[newChosenComponent.componentIndex].y
+    w.value = thisManual.pages[newChosenComponent.pageIndex].componentList[newChosenComponent.componentIndex].w
+    h.value = thisManual.pages[newChosenComponent.pageIndex].componentList[newChosenComponent.componentIndex].h
+    minW.value = thisManual.pages[newChosenComponent.pageIndex].componentList[newChosenComponent.componentIndex].minW
+    maxW.value = thisManual.pages[newChosenComponent.pageIndex].componentList[newChosenComponent.componentIndex].maxW
+    minH.value = thisManual.pages[newChosenComponent.pageIndex].componentList[newChosenComponent.componentIndex].minH
+    maxH.value = thisManual.pages[newChosenComponent.pageIndex].componentList[newChosenComponent.componentIndex].maxH
+    switch (thisManual.pages[newChosenComponent.pageIndex].componentList[newChosenComponent.componentIndex].type) {
       case 0:
         textContentEditorVisible.value = true
-        textContent.value = componentList[newChosenComponent].componentProps?.content || ""
+        textContent.value =
+          thisManual.pages[newChosenComponent.pageIndex].componentList[newChosenComponent.componentIndex].componentProps
+            ?.content || ""
         fontSizeEditorVisible.value = true
-        fontSize.value = parseInt(componentList[newChosenComponent].componentProps?.fontSize || "16")
+        fontSize.value = parseInt(
+          thisManual.pages[newChosenComponent.pageIndex].componentList[newChosenComponent.componentIndex].componentProps
+            ?.fontSize || "16"
+        )
         fontWeightEditorVisible.value = true
-        fontWeight.value = componentList[newChosenComponent].componentProps?.fontWeight || "normal"
+        fontWeight.value =
+          thisManual.pages[newChosenComponent.pageIndex].componentList[newChosenComponent.componentIndex].componentProps
+            ?.fontWeight || "normal"
         fontColorEditorVisible.value = true
-        fontColor.value = componentList[newChosenComponent].componentProps?.color || "#000000"
+        fontColor.value =
+          thisManual.pages[newChosenComponent.pageIndex].componentList[newChosenComponent.componentIndex].componentProps
+            ?.color || "#000000"
         backgroundColorEditorVisible.value = true
-        backgroundColor.value = componentList[newChosenComponent].componentProps?.background || "#ffffff"
+        backgroundColor.value =
+          thisManual.pages[newChosenComponent.pageIndex].componentList[newChosenComponent.componentIndex].componentProps
+            ?.background || "#ffffff"
         break
       case 1:
         UrlEditorVisible.value = true
-        UrlProps.value = componentList[newChosenComponent].componentProps?.url || ""
+        UrlProps.value =
+          thisManual.pages[newChosenComponent.pageIndex].componentList[newChosenComponent.componentIndex].componentProps
+            ?.url || ""
         backgroundColorEditorVisible.value = true
-        backgroundColor.value = componentList[newChosenComponent].componentProps?.background || "#ffffff"
+        backgroundColor.value =
+          thisManual.pages[newChosenComponent.pageIndex].componentList[newChosenComponent.componentIndex].componentProps
+            ?.background || "#ffffff"
         break
       case 2:
         UrlEditorVisible.value = true
-        UrlProps.value = componentList[newChosenComponent].componentProps?.url || ""
+        UrlProps.value =
+          thisManual.pages[newChosenComponent.pageIndex].componentList[newChosenComponent.componentIndex].componentProps
+            ?.url || ""
         backgroundColorEditorVisible.value = true
-        backgroundColor.value = componentList[newChosenComponent].componentProps?.background || "#ffffff"
+        backgroundColor.value =
+          thisManual.pages[newChosenComponent.pageIndex].componentList[newChosenComponent.componentIndex].componentProps
+            ?.background || "#ffffff"
         break
     }
   }
 })
 
 //选择组件
-function chooseComponentHandler(i: string) {
-  chosenComponent.value = componentList.findIndex(function (item) {
-    return item.i == i
-  })
+function chooseComponentHandler(pageIndex: number, componentIndex: number) {
+  chosenComponent.pageIndex = pageIndex
+  chosenComponent.componentIndex = componentIndex
 }
 
 /* 原型组件区（左侧区域）Tab相关 ********************************************************************************************/
@@ -194,17 +175,48 @@ const prototypeComponentList = reactive([
   }
 ])
 const mouseXY = { x: 0, y: 0 } //监测鼠标位置
-const nextId = ref(1) //下一个新增组件的id
+
+//找出拖拽目标页
+function getTargetPage() {
+  const pages = (designZoneRef.value as unknown as HTMLElement).children
+  let pageIndex = undefined
+  let pageRect = undefined
+  for (let i = 0; i < pages.length; i++) {
+    const parentRect = pages[i].getBoundingClientRect()
+    if (
+      mouseXY.x > parentRect.left &&
+      mouseXY.x < parentRect.right &&
+      mouseXY.y > parentRect.top &&
+      mouseXY.y < parentRect.bottom
+    ) {
+      pageIndex = i
+      pageRect = parentRect
+      break
+    }
+  }
+  return {
+    pageIndex: pageIndex,
+    pageRect: pageRect
+  }
+}
+
+//获取新组件的id
+function getNewId(pageIndex: number) {
+  const componentNum = thisManual.pages[pageIndex].componentList.length
+  if (componentNum > 0) {
+    return (parseInt(thisManual.pages[pageIndex].componentList[componentNum - 1].i) + 1).toString()
+  } else {
+    return "1"
+  }
+}
 
 //拖拽添加组件
 function addComponentHandler(index: number) {
-  const parentRect = (designZoneRef.value as unknown as HTMLElement).getBoundingClientRect()
-  if (
-    mouseXY.x > parentRect.left &&
-    mouseXY.x < parentRect.right &&
-    mouseXY.y > parentRect.top &&
-    mouseXY.y < parentRect.bottom
-  ) {
+  //找出拖拽目标页
+  const pageIndex = getTargetPage().pageIndex
+  const pageRect = getTargetPage().pageRect
+  if (pageIndex != undefined && pageRect != undefined) {
+    //准备新组件的参数
     let componentProps = null
     switch (index) {
       case 0:
@@ -229,10 +241,10 @@ function addComponentHandler(index: number) {
         }
         break
     }
-    const component: Component = {
-      i: nextId.value.toString(),
-      x: Math.trunc((mouseXY.x - parentRect.left) / (parentRect.width / colNum.value)),
-      y: Math.trunc((mouseXY.y - parentRect.top) / rowHeight.value),
+    const component: MuseComponent = {
+      i: getNewId(pageIndex),
+      x: Math.trunc((mouseXY.x - pageRect.left) / (pageRect.width / colNum.value)),
+      y: Math.trunc((mouseXY.y - pageRect.top) / rowHeight.value),
       w: 10,
       h: 10,
       minW: 1,
@@ -242,25 +254,21 @@ function addComponentHandler(index: number) {
       type: index,
       componentProps: componentProps!
     }
-    nextId.value++
-    chosenComponent.value = componentList.length
-    componentList.push(component)
+    chooseComponentHandler(pageIndex, thisManual.pages[pageIndex].componentList.length - 1)
+    thisManual.pages[pageIndex].componentList.push(component)
   }
 }
 
 //拖拽添加图片
 function addImageHandler(index: number) {
-  const parentRect = (designZoneRef.value as unknown as HTMLElement).getBoundingClientRect()
-  if (
-    mouseXY.x > parentRect.left &&
-    mouseXY.x < parentRect.right &&
-    mouseXY.y > parentRect.top &&
-    mouseXY.y < parentRect.bottom
-  ) {
-    const component: Component = {
-      i: nextId.value.toString(),
-      x: Math.trunc((mouseXY.x - parentRect.left) / (parentRect.width / colNum.value)),
-      y: Math.trunc((mouseXY.y - parentRect.top) / rowHeight.value),
+  //找出拖拽目标页
+  const pageIndex = getTargetPage().pageIndex
+  const pageRect = getTargetPage().pageRect
+  if (pageIndex != undefined && pageRect != undefined) {
+    const component: MuseComponent = {
+      i: getNewId(pageIndex),
+      x: Math.trunc((mouseXY.x - pageRect.left) / (pageRect.width / colNum.value)),
+      y: Math.trunc((mouseXY.y - pageRect.top) / rowHeight.value),
       w: 10,
       h: 10,
       minW: 1,
@@ -273,26 +281,18 @@ function addImageHandler(index: number) {
         background: "#ffffff"
       }
     }
-    nextId.value++
-    chosenComponent.value = componentList.length
-    componentList.push(component)
+    chooseComponentHandler(pageIndex, thisManual.pages[pageIndex].componentList.length - 1)
+    thisManual.pages[pageIndex].componentList.push(component)
   }
 }
 
 //删除组件
-function deleteComponentHandler(i: string) {
-  const index = componentList.findIndex(function (item) {
-    return item.i == i
-  })
-  if (componentList.length == 1) {
-    chosenComponent.value = -1
-  } else {
-    if (chosenComponent.value === index && index > -1) {
-      chosenComponent.value = 0
+function deleteComponentHandler(pageIndex: number, componentIndex: number) {
+  if (pageIndex > 0 && componentIndex > 0) {
+    if (chosenComponent.pageIndex == pageIndex && chosenComponent.componentIndex == componentIndex) {
+      chooseComponentHandler(-1, -1)
     }
-  }
-  if (index > -1) {
-    componentList.splice(index, 1)
+    thisManual.pages[pageIndex].componentList.splice(componentIndex, 1)
   } else {
     ElMessage.error("Invalid delete index")
   }
@@ -304,7 +304,7 @@ const chosenFileTab = ref(0)
 const fileTabColor = "border-bottom: 2px solid #4A505E"
 const activeFileTabColor = "border-bottom: 2px solid #6896FC"
 
-const uploadedImages: MuseschoolImage[] = reactive([]) //已上传的图片
+const uploadedImages: MuseImage[] = reactive([]) //已上传的图片
 const uploadDialogVisible = ref(false)
 const fileUrl = ref("")
 const imageList = ref<any[]>([])
@@ -367,7 +367,6 @@ const handleUpload = () => {
   pList.value[0] = p1
   if (fileList.value.length === 0) {
     return new Promise((resolve) => {
-      console.log(imageList)
       // uploadedImages.values = imageList
       resolve(true)
     })
@@ -387,7 +386,6 @@ const handleUpload = () => {
               uploadedImages.push({
                 url: res.data.data
               })
-              console.log(uploadedImages)
               resolve(index)
             })
             .catch((error) => {
@@ -460,10 +458,12 @@ const backgroundColor = ref("#FFFFFF")
 const backgroundColorEditorVisible = ref(false)
 //监听变化
 watch(fontColor, (newFontColor) => {
-  componentList[chosenComponent.value].componentProps!.color = newFontColor
+  thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].componentProps!.color =
+    newFontColor
 })
 watch(backgroundColor, (newBackgroundColor) => {
-  componentList[chosenComponent.value].componentProps!.background = newBackgroundColor
+  thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].componentProps!.background =
+    newBackgroundColor
 })
 //效果
 
@@ -479,39 +479,57 @@ const minH = ref(1)
 const maxH = ref(20)
 //监听变化
 watch(x, (newX) => {
-  componentList[chosenComponent.value].x = newX
+  thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].x = newX
 })
 watch(y, (newY) => {
-  componentList[chosenComponent.value].y = newY
+  thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].y = newY
 })
 watch(w, (newW) => {
-  componentList[chosenComponent.value].w = newW
+  thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].w = newW
 })
 watch(h, (newH) => {
-  componentList[chosenComponent.value].h = newH
+  thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].h = newH
 })
 watch(minW, (newMinW) => {
-  componentList[chosenComponent.value].minW = newMinW
+  thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].minW = newMinW
 })
 watch(maxW, (newMaxW) => {
-  componentList[chosenComponent.value].maxW = newMaxW
+  thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].maxW = newMaxW
 })
 watch(minH, (newMinH) => {
-  componentList[chosenComponent.value].minH = newMinH
+  thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].minH = newMinH
 })
 watch(maxH, (newMaxH) => {
-  componentList[chosenComponent.value].maxH = newMaxH
+  thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].maxH = newMaxH
 })
+
+//选择正在更改（移动/缩放）的组件
+function chooseChangedComponent(i: string) {
+  const pageIndex = getTargetPage().pageIndex
+  if (pageIndex != undefined) {
+    const componentIndex = thisManual.pages[pageIndex].componentList.findIndex((item) => {
+      return item.i == i
+    })
+    if (componentIndex >= 0) {
+      chooseComponentHandler(pageIndex, componentIndex)
+    } else {
+      ElMessage.error("Component error")
+    }
+  } else {
+    ElMessage.error("Page error")
+  }
+}
 
 //更改组件位置时同步修改表单值
 function componentMoveHandler(i: string, newX: number, newY: number) {
-  chooseComponentHandler(i)
+  chooseChangedComponent(i)
   x.value = newX
   y.value = newY
 }
 
 //更改组件大小时同步修改表单值
 function componentResizeHandler(i: string, newW: number, newH: number) {
+  chooseChangedComponent(i)
   w.value = newW
   h.value = newH
 }
@@ -539,43 +557,33 @@ const UrlProps = ref("")
 const UrlEditorVisible = ref(false)
 //监听变化
 watch(textContent, (newTextContent) => {
-  componentList[chosenComponent.value].componentProps!.content = newTextContent
+  thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].componentProps!.content =
+    newTextContent
 })
 watch(fontSize, (newFontSize) => {
-  componentList[chosenComponent.value].componentProps!.fontSize = newFontSize.toString()
+  thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].componentProps!.fontSize =
+    newFontSize.toString()
 })
 watch(fontWeight, (newFontWeight) => {
-  componentList[chosenComponent.value].componentProps!.fontWeight = newFontWeight
+  thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].componentProps!.fontWeight =
+    newFontWeight
 })
 watch(UrlProps, (newUrl) => {
-  componentList[chosenComponent.value].componentProps!.url = newUrl
+  thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].componentProps!.url = newUrl
 })
 
 /* 生命周期钩子 ********************************************************************************************/
 onMounted(() => {
-  //若componentList为空，尝试从本地存储获取数据
-  if (componentList.length == 0) {
-    const storedComponentList = getManual().componentList
-    if (storedComponentList.length > 0) {
-      nextId.value = parseInt(storedComponentList[storedComponentList.length - 1].i) + 1
-      if (storedComponentList) {
-        for (let i = 0; i < storedComponentList.length; i++) {
-          componentList.push(storedComponentList[i])
-        }
-      }
-    }
-  } else {
-    nextId.value = parseInt(componentList[componentList.length - 1].i) + 1
-  }
-  //若id为负，尝试从本地存储获取数据
-  if (id.value < 0) {
-    if (getManual().id > 0) {
-      id.value = getManual().id
-    }
+  //若manual为空或者id为默认值，尝试从本地存储获取数据
+  if ((thisManual.pages.length == 1 && thisManual.pages[0].componentList.length == 0) || thisManual.id == -1) {
+    const storedManual = getManual()
+    thisManual.id = storedManual.id
+    thisManual.title = storedManual.title
+    thisManual.pages = storedManual.pages
   }
   //若uploadedImages为空，尝试从本地存储获取数据
   if (uploadedImages.length == 0) {
-    const storedImages: MuseschoolImage[] = getUploadedImages()
+    const storedImages: MuseImage[] = getUploadedImages()
     if (storedImages.length > 0) {
       for (let i = 0; i < storedImages.length; i++) {
         uploadedImages.push(storedImages[i])
@@ -590,7 +598,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  setManual({ id: id.value, title: title.value, componentList: componentList }) //持久化存储manual
+  setManual(thisManual) //持久化存储manual
   setUploadedImages(uploadedImages) //持久化存储uploadedImages
   window.removeEventListener("resize", resizeHandler) //移除页面窗口大小监听器
   document.removeEventListener("dragover", dragoverHandler) //移除鼠标位置监听器
@@ -610,7 +618,7 @@ function dragoverHandler(e: { clientX: number; clientY: number }) {
 
 //unload之前持久化存储
 function beforeunloadHandler() {
-  setManual({ id: id.value, title: title.value, componentList: componentList }) //持久化存储manual
+  setManual(thisManual) //持久化存储manual
   setUploadedImages(uploadedImages) //持久化存储uploadedImages
 }
 </script>
@@ -630,14 +638,14 @@ function beforeunloadHandler() {
         </el-image>
         <span>Museschool</span>
       </div>
-      <div class="title" @click="titleChangeHandler">{{ title }}</div>
+      <div class="title" @click="titleEditorVisible = true">{{ thisManual.title }}</div>
       <div v-if="titleEditorVisible" class="titleForm">
-        <el-input v-model="title" :placeholder="title" style="width: 70%" />
-        <el-button color="#2565F1" @click="titleChangeHandler">修改</el-button>
+        <el-input v-model="thisManual.title" :placeholder="thisManual.title" style="width: 70%" />
+        <el-button color="#2565F1" @click="titleEditorVisible = false">修改</el-button>
       </div>
       <div class="header-btn">
-        <el-button color="#2565F1" icon="Monitor" @click="manualPreviewHandler">预览</el-button>
-        <el-button color="#FFFFFF" icon="Download" @click="manualExportHandler">导出</el-button>
+        <el-button color="#2565F1" icon="Monitor" @click="navigateToManualPreview(false)">预览</el-button>
+        <el-button color="#FFFFFF" icon="Download" @click="navigateToManualPreview(true)">导出</el-button>
         <el-button color="#2565F1" icon="Upload" @click="manualUploadHandler">上传</el-button>
         <el-button icon="Delete" theme="danger" @click="manualClearHandler">清空</el-button>
       </div>
@@ -724,7 +732,7 @@ function beforeunloadHandler() {
             上传文件
           </el-button>
           <el-dialog v-model="uploadDialogVisible" title="上传文件">
-            <!--            现在上传的文件默认是图片，后续要进行判断并区分处理，注意下方el-upload的修改-->
+            <!--现在上传的文件默认是图片，后续要进行判断并区分处理，注意下方el-upload的修改-->
             <el-form>
               <el-form-item>
                 <el-upload
@@ -801,45 +809,47 @@ function beforeunloadHandler() {
         <div v-if="chosenComponentsTab === 4" class="components-tab">素材</div>
       </div>
       <div ref="designZoneRef" class="design-zone">
-        <grid-layout
-          :col-num="colNum"
-          :layout="componentList"
-          :margin="[0, 0]"
-          :preventCollision="true"
-          :row-height="rowHeight"
-          :verticalCompact="false"
-          class="vue-grid-layout"
-        >
-          <grid-item
-            v-for="item in componentList"
-            :key="item.i"
-            :h="item.h"
-            :i="item.i"
-            :max-h="item.maxH"
-            :max-w="item.maxW"
-            :min-h="item.minH"
-            :min-w="item.minW"
-            :w="item.w"
-            :x="item.x"
-            :y="item.y"
-            class="grid-item"
-            @move="componentMoveHandler"
-            @resize="componentResizeHandler"
+        <div v-for="(page, pageIndex) in thisManual.pages" :key="pageIndex" :style="page.background" class="muse-page">
+          <grid-layout
+            :col-num="colNum"
+            :layout="page.componentList"
+            :margin="[0, 0]"
+            :preventCollision="true"
+            :row-height="rowHeight"
+            :verticalCompact="false"
+            class="vue-grid-layout"
           >
-            <general-component
-              :component-props="item.componentProps"
+            <grid-item
+              v-for="(item, componentIndex) in page.componentList"
+              :key="componentIndex"
+              :h="item.h"
               :i="item.i"
-              :showDelete="true"
-              :type="item.type"
-              style="background: transparent"
-              @delete-component="deleteComponentHandler"
-              @choose-component="chooseComponentHandler"
-            />
-          </grid-item>
-        </grid-layout>
+              :max-h="item.maxH"
+              :max-w="item.maxW"
+              :min-h="item.minH"
+              :min-w="item.minW"
+              :w="item.w"
+              :x="item.x"
+              :y="item.y"
+              class="grid-item"
+              @move="componentMoveHandler"
+              @resize="componentResizeHandler"
+            >
+              <general-component
+                :component-props="item.componentProps"
+                :i="item.i"
+                :showDelete="true"
+                :type="item.type"
+                style="background: transparent"
+                @delete-component="deleteComponentHandler(pageIndex, componentIndex)"
+                @choose-component="chooseComponentHandler(pageIndex, componentIndex)"
+              />
+            </grid-item>
+          </grid-layout>
+        </div>
       </div>
       <div class="props-editor">
-        <div v-if="componentList.length !== 0" class="editor-form" style="margin-bottom: 5%">
+        <div v-if="thisManual.pages.length !== 0" class="editor-form" style="margin-bottom: 5%">
           <div
             :style="chosenEditorTab === 0 ? activeEditorTabColor : editorTabColor"
             class="editor-tab-btn"
@@ -885,7 +895,7 @@ function beforeunloadHandler() {
         </div>
         <div v-if="chosenEditorTab === 1" class="editor-tab">效果</div>
         <div v-if="chosenEditorTab === 2" class="editor-tab">
-          <div v-if="componentList.length !== 0" class="editor-form">
+          <div v-if="chosenComponent.componentIndex >= 0" class="editor-form">
             <div class="half-editor-form">
               <div class="form-label">x</div>
               <el-input-number
@@ -910,7 +920,7 @@ function beforeunloadHandler() {
               />
             </div>
           </div>
-          <div v-if="componentList.length !== 0" class="editor-form">
+          <div v-if="chosenComponent.componentIndex >= 0" class="editor-form">
             <div class="half-editor-form">
               <div class="form-label">宽</div>
               <el-input-number
@@ -936,7 +946,7 @@ function beforeunloadHandler() {
               />
             </div>
           </div>
-          <div v-if="componentList.length !== 0" class="editor-form" style="font-size: 14px">
+          <div v-if="chosenComponent.componentIndex >= 0" class="editor-form" style="font-size: 14px">
             <div class="half-editor-form">
               <div class="form-label">最小<br />宽度</div>
               <el-input-number
@@ -962,7 +972,7 @@ function beforeunloadHandler() {
               />
             </div>
           </div>
-          <div v-if="componentList.length !== 0" class="editor-form" style="font-size: 14px">
+          <div v-if="chosenComponent.componentIndex >= 0" class="editor-form" style="font-size: 14px">
             <div class="half-editor-form">
               <div class="form-label">最小<br />高度</div>
               <el-input-number
@@ -1178,6 +1188,17 @@ function beforeunloadHandler() {
       margin-top: 1%;
       background: #ffffff;
       overflow-y: scroll;
+
+      .muse-page {
+        width: 100%;
+        height: 700px;
+        background: #409eff !important;
+
+        .vue-grid-layout {
+          width: 100%;
+          height: 100%;
+        }
+      }
     }
 
     .props-editor {
