@@ -10,6 +10,7 @@ import { ElMessage } from "element-plus"
 import { Edit, MagicStick, Operation, Picture, Plus } from "@element-plus/icons-vue"
 import SvgIcon from "@/components/SvgIcon/index.vue"
 import museschool_logo from "@/assets/museschool/museschool_logo.png"
+import { uploadFile } from "@/api/adminMuseum"
 
 const router = useRouter()
 
@@ -247,6 +248,37 @@ function addComponentHandler(index: number) {
   }
 }
 
+//拖拽添加图片
+function addImageHandler(index: number) {
+  const parentRect = (designZoneRef.value as unknown as HTMLElement).getBoundingClientRect()
+  if (
+    mouseXY.x > parentRect.left &&
+    mouseXY.x < parentRect.right &&
+    mouseXY.y > parentRect.top &&
+    mouseXY.y < parentRect.bottom
+  ) {
+    const component: Component = {
+      i: nextId.value.toString(),
+      x: Math.trunc((mouseXY.x - parentRect.left) / (parentRect.width / colNum.value)),
+      y: Math.trunc((mouseXY.y - parentRect.top) / rowHeight.value),
+      w: 10,
+      h: 10,
+      minW: 1,
+      minH: 1,
+      maxW: 20,
+      maxH: 20,
+      type: 1,
+      componentProps: {
+        url: uploadedImages[index].url,
+        background: "#ffffff"
+      }
+    }
+    nextId.value++
+    chosenComponent.value = componentList.length
+    componentList.push(component)
+  }
+}
+
 //删除组件
 function deleteComponentHandler(i: string) {
   const index = componentList.findIndex(function (item) {
@@ -275,6 +307,7 @@ const activeFileTabColor = "border-bottom: 2px solid #6896FC"
 const uploadedImages: MuseschoolImage[] = reactive([]) //已上传的图片
 const uploadDialogVisible = ref(false)
 const fileUrl = ref("")
+const imageList = ref<any[]>([])
 const fileList = ref<any[]>([])
 const previewPicDialogVisible = ref(false)
 const previewImage = ref("")
@@ -313,7 +346,7 @@ function fileRemoveHandler(_file: any, _fileList: any) {
     }
   })
   fileList.value = _fileList
-  // uploadedImages = _fileList
+  imageList.value = _fileList
 }
 
 //上传文件前的钩子
@@ -323,7 +356,50 @@ function beforeUploadFileHandler(_file: any) {
 }
 
 //上传文件
-function fileUploadHandler() {}
+async function fileUploadHandler() {
+  await handleUpload()
+  uploadDialogVisible.value = false
+}
+
+const handleUpload = () => {
+  const p1 = Promise.resolve(true)
+  const pList = ref<any[]>([])
+  pList.value[0] = p1
+  if (fileList.value.length === 0) {
+    return new Promise((resolve) => {
+      console.log(imageList)
+      // uploadedImages.values = imageList
+      resolve(true)
+    })
+  } else {
+    fileList.value.forEach(function (item, index) {
+      // await Promise.all(pList.value.slice(0, index + 1))
+      pList.value[index + 1] = new Promise((resolve, reject) => {
+        if (item.url !== undefined) {
+          imageList.value.push(item.url)
+          resolve(true)
+        } else {
+          const param = new FormData()
+          param.append("file", item)
+          uploadFile(param)
+            .then((res) => {
+              imageList.value.push(res.data.data)
+              uploadedImages.push({
+                url: res.data.data
+              })
+              console.log(uploadedImages)
+              resolve(index)
+            })
+            .catch((error) => {
+              reject(error)
+            })
+        }
+      })
+    })
+    return Promise.all(pList.value)
+    //promise.all方法用于将多个promise实例，包装成一个新的promise实例
+  }
+}
 
 /* 组件参数修改区（右侧区域）Tab相关 ********************************************************************************************/
 const chosenEditorTab = ref(0)
@@ -708,7 +784,16 @@ function beforeunloadHandler() {
               音频
             </div>
           </div>
-          <div v-if="chosenFileTab === 0" class="file-tab">图片</div>
+          <div v-if="chosenFileTab === 0" class="file-tab">
+            <el-image
+              v-for="(image, index) in uploadedImages"
+              :key="index"
+              :src="image.url"
+              draggable="true"
+              style="height: 10%; margin-right: 5%"
+              @dragend="addImageHandler(index)"
+            />
+          </div>
           <div v-if="chosenFileTab === 1" class="file-tab">视频</div>
           <div v-if="chosenFileTab === 2" class="file-tab">音频</div>
         </div>
