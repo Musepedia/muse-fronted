@@ -25,7 +25,8 @@ export const getManual = () => {
     : {
         id: -1,
         title: "研学清单标题",
-        pages: [{ page: 0, background: "background:white", componentList: [] }]
+        nextComponentId: 1,
+        pages: [{ page: 0, pageInfo: { background: "background:white" }, componentList: [] }]
       }
 }
 

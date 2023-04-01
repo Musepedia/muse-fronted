@@ -7,7 +7,8 @@ export const useMuseschoolStore = defineStore("Museschool", () => {
   const manual: MuseManual = reactive({
     id: -1,
     title: "-1",
-    pages: [{ page: 0, background: "background:white", componentList: [] }]
+    nextComponentId: 1,
+    pages: [{ page: 0, pageInfo: { nextId: 1, background: "background:white" }, componentList: [] }]
   })
   const exportManual = ref()
   return { manual, exportManual }

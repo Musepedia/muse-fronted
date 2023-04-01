@@ -3,13 +3,16 @@ declare module "museschool" {
   interface MuseManual {
     id: number
     title: string
+    nextComponentId: number
     pages: MusePage[]
   }
 
   //研学清单页面类型
   interface MusePage {
     page: number
-    background: string
+    pageInfo: {
+      background: string
+    }
     componentList: MuseComponent[]
   }
 

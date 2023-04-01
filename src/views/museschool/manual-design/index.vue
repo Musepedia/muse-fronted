@@ -51,7 +51,13 @@ function manualUploadHandler() {
 //清空手册
 function manualClearHandler() {
   thisManual.pages.splice(0)
-  thisManual.pages.push({ page: 0, background: "background:white", componentList: [] })
+  thisManual.pages.push({
+    page: 0,
+    pageInfo: {
+      background: "background:white"
+    },
+    componentList: []
+  })
   setManual(thisManual)
 }
 
@@ -136,6 +142,17 @@ function chooseComponentHandler(pageIndex: number, componentIndex: number) {
   chosenComponent.componentIndex = componentIndex
 }
 
+//根据组件id选择组件
+function chooseComponentById(id: string) {
+  thisManual.pages.forEach((page, pageIndex) => {
+    page.componentList.forEach((component, componentIndex) => {
+      if (component.i == id) {
+        chooseComponentHandler(pageIndex, componentIndex)
+      }
+    })
+  })
+}
+
 /* 原型组件区（左侧区域）Tab相关 ********************************************************************************************/
 const chosenComponentsTab = ref(0)
 const componentsTabColor = "color: #6f6f6f;background:#313338"
@@ -200,21 +217,17 @@ function getTargetPage() {
   }
 }
 
-//获取新组件的id
-function getNewId(pageIndex: number) {
-  const componentNum = thisManual.pages[pageIndex].componentList.length
-  if (componentNum > 0) {
-    return (parseInt(thisManual.pages[pageIndex].componentList[componentNum - 1].i) + 1).toString()
-  } else {
-    return "1"
-  }
+//添加组件
+function addComponent(component: MuseComponent, pageIndex: number) {
+  thisManual.nextComponentId++
+  chooseComponentHandler(pageIndex, thisManual.pages[pageIndex].componentList.length - 1)
+  thisManual.pages[pageIndex].componentList.push(component)
 }
 
 //拖拽添加组件
 function addComponentHandler(index: number) {
   //找出拖拽目标页
-  const pageIndex = getTargetPage().pageIndex
-  const pageRect = getTargetPage().pageRect
+  const { pageIndex, pageRect } = getTargetPage()
   if (pageIndex != undefined && pageRect != undefined) {
     //准备新组件的参数
     let componentProps = null
@@ -241,48 +254,49 @@ function addComponentHandler(index: number) {
         }
         break
     }
-    const component: MuseComponent = {
-      i: getNewId(pageIndex),
-      x: Math.trunc((mouseXY.x - pageRect.left) / (pageRect.width / colNum.value)),
-      y: Math.trunc((mouseXY.y - pageRect.top) / rowHeight.value),
-      w: 10,
-      h: 10,
-      minW: 1,
-      minH: 1,
-      maxW: 20,
-      maxH: 20,
-      type: index,
-      componentProps: componentProps!
-    }
-    chooseComponentHandler(pageIndex, thisManual.pages[pageIndex].componentList.length - 1)
-    thisManual.pages[pageIndex].componentList.push(component)
+    addComponent(
+      {
+        i: thisManual.nextComponentId.toString(),
+        x: Math.trunc((mouseXY.x - pageRect.left) / (pageRect.width / colNum.value)),
+        y: Math.trunc((mouseXY.y - pageRect.top) / rowHeight.value),
+        w: 10,
+        h: 10,
+        minW: 1,
+        minH: 1,
+        maxW: 20,
+        maxH: 20,
+        type: index,
+        componentProps: componentProps!
+      },
+      pageIndex
+    )
   }
 }
 
 //拖拽添加图片
 function addImageHandler(index: number) {
   //找出拖拽目标页
-  const pageIndex = getTargetPage().pageIndex
-  const pageRect = getTargetPage().pageRect
+  const { pageIndex, pageRect } = getTargetPage()
   if (pageIndex != undefined && pageRect != undefined) {
-    const component: MuseComponent = {
-      i: getNewId(pageIndex),
-      x: Math.trunc((mouseXY.x - pageRect.left) / (pageRect.width / colNum.value)),
-      y: Math.trunc((mouseXY.y - pageRect.top) / rowHeight.value),
-      w: 10,
-      h: 10,
-      minW: 1,
-      minH: 1,
-      maxW: 20,
-      maxH: 20,
-      type: 1,
-      componentProps: {
-        url: uploadedImages[index].url,
-        background: "#ffffff"
-      }
-    }
-    chooseComponentHandler(pageIndex, thisManual.pages[pageIndex].componentList.length - 1)
-    thisManual.pages[pageIndex].componentList.push(component)
+    addComponent(
+      {
+        i: thisManual.nextComponentId.toString(),
+        x: Math.trunc((mouseXY.x - pageRect.left) / (pageRect.width / colNum.value)),
+        y: Math.trunc((mouseXY.y - pageRect.top) / rowHeight.value),
+        w: 10,
+        h: 10,
+        minW: 1,
+        minH: 1,
+        maxW: 20,
+        maxH: 20,
+        type: 1,
+        componentProps: {
+          url: uploadedImages[index].url,
+          background: "#ffffff"
+        }
+      },
+      pageIndex
+    )
   }
 }
 
@@ -503,33 +517,25 @@ watch(maxH, (newMaxH) => {
   thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].maxH = newMaxH
 })
 
-//选择正在更改（移动/缩放）的组件
-function chooseChangedComponent(i: string) {
+//更改组件位置时同步修改表单值
+function componentMovedHandler(i: string, newX: number, newY: number) {
+  chooseComponentById(i)
   const pageIndex = getTargetPage().pageIndex
   if (pageIndex != undefined) {
-    const componentIndex = thisManual.pages[pageIndex].componentList.findIndex((item) => {
-      return item.i == i
-    })
-    if (componentIndex >= 0) {
-      chooseComponentHandler(pageIndex, componentIndex)
+    if (pageIndex == chosenComponent.pageIndex) {
+      x.value = newX
+      y.value = newY
     } else {
-      ElMessage.error("Component error")
+      //在本页内删除，在目标页添加
     }
   } else {
-    ElMessage.error("Page error")
+    //目的地非法，跳回
   }
 }
 
-//更改组件位置时同步修改表单值
-function componentMoveHandler(i: string, newX: number, newY: number) {
-  chooseChangedComponent(i)
-  x.value = newX
-  y.value = newY
-}
-
 //更改组件大小时同步修改表单值
-function componentResizeHandler(i: string, newW: number, newH: number) {
-  chooseChangedComponent(i)
+function componentResizedHandler(i: string, newW: number, newH: number) {
+  chooseComponentById(i)
   w.value = newW
   h.value = newH
 }
@@ -585,15 +591,16 @@ onMounted(() => {
   if (uploadedImages.length == 0) {
     const storedImages: MuseImage[] = getUploadedImages()
     if (storedImages.length > 0) {
-      for (let i = 0; i < storedImages.length; i++) {
-        uploadedImages.push(storedImages[i])
-      }
+      storedImages.forEach((storedImage) => {
+        uploadedImages.push(storedImage)
+      })
     }
   }
   resizeHandler() //计算行高
   componentsTabChangeHandler(0) //默认为组件tab
   window.addEventListener("resize", resizeHandler) //添加页面窗口大小监听器
-  document.addEventListener("dragover", dragoverHandler) //添加鼠标位置监听器
+  document.addEventListener("mousemove", mouseMoveHandler) //添加鼠标位置监听器
+  document.addEventListener("dragover", mouseMoveHandler) //添加鼠标位置监听器
   window.addEventListener("beforeunload", beforeunloadHandler) //添加unload监听器，持久化存储manual
 })
 
@@ -601,7 +608,8 @@ onUnmounted(() => {
   setManual(thisManual) //持久化存储manual
   setUploadedImages(uploadedImages) //持久化存储uploadedImages
   window.removeEventListener("resize", resizeHandler) //移除页面窗口大小监听器
-  document.removeEventListener("dragover", dragoverHandler) //移除鼠标位置监听器
+  document.removeEventListener("mousemove", mouseMoveHandler) //移除鼠标位置监听器
+  document.removeEventListener("dragover", mouseMoveHandler) //移除鼠标位置监听器
   window.removeEventListener("beforeunload", beforeunloadHandler) //移除unload监听器
 })
 
@@ -611,7 +619,7 @@ function resizeHandler() {
 }
 
 //鼠标拖动组件时获取鼠标位置
-function dragoverHandler(e: { clientX: number; clientY: number }) {
+function mouseMoveHandler(e: { clientX: number; clientY: number }) {
   mouseXY.x = e.clientX
   mouseXY.y = e.clientY
 }
@@ -713,7 +721,6 @@ function beforeunloadHandler() {
               :i="item.i"
               :showDelete="false"
               :type="item.type"
-              style="background: red"
             />
           </div>
         </div>
@@ -809,14 +816,19 @@ function beforeunloadHandler() {
         <div v-if="chosenComponentsTab === 4" class="components-tab">素材</div>
       </div>
       <div ref="designZoneRef" class="design-zone">
-        <div v-for="(page, pageIndex) in thisManual.pages" :key="pageIndex" :style="page.background" class="muse-page">
+        <div
+          v-for="(page, pageIndex) in thisManual.pages"
+          :key="pageIndex"
+          :style="page.pageInfo.background"
+          class="muse-page"
+        >
           <grid-layout
+            v-model:layout="page.componentList"
             :col-num="colNum"
-            :layout="page.componentList"
             :margin="[0, 0]"
-            :preventCollision="true"
+            :prevent-collision="true"
             :row-height="rowHeight"
-            :verticalCompact="false"
+            :vertical-compact="false"
             class="vue-grid-layout"
           >
             <grid-item
@@ -832,8 +844,8 @@ function beforeunloadHandler() {
               :x="item.x"
               :y="item.y"
               class="grid-item"
-              @move="componentMoveHandler"
-              @resize="componentResizeHandler"
+              @moved="componentMovedHandler"
+              @resized="componentResizedHandler"
             >
               <general-component
                 :component-props="item.componentProps"
@@ -1182,21 +1194,24 @@ function beforeunloadHandler() {
     }
 
     .design-zone {
-      width: 55%;
-      height: 96%;
-      border-radius: 5px;
-      margin-top: 1%;
-      background: #ffffff;
+      width: 57%;
+      height: 100%;
       overflow-y: scroll;
 
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+
       .muse-page {
-        width: 100%;
+        width: 96%;
+        border-radius: 5px;
         height: 700px;
-        background: #409eff !important;
+        margin-top: 2%;
 
         .vue-grid-layout {
           width: 100%;
-          height: 100%;
+          height: 700px;
         }
       }
     }
