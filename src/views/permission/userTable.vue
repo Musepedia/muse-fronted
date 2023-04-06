@@ -3,14 +3,14 @@ import { reactive, ref, watch } from "vue"
 import {
   addUserApi,
   changeStatesApi,
-  updateUserApi,
-  resetUserPwdApi,
+  getRoleListApi,
   getUserListApi,
-  getRoleListApi
+  resetUserPwdApi,
+  updateUserApi
 } from "@/api/adminUser"
-import { getMuseumListApi, getMuseInfoById } from "@/api/adminMuseum"
-import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
-import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
+import { getMuseInfoById, getMuseumListApi } from "@/api/adminMuseum"
+import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus"
+import { CirclePlus, Download, Refresh, RefreshRight, Search } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 
 const loading = ref<boolean>(false)
@@ -336,19 +336,19 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getUser
 
 <template>
   <div class="app-container">
-    <el-card v-loading="loading" shadow="never" class="search-wrapper">
+    <el-card v-loading="loading" class="search-wrapper" shadow="never">
       <el-form ref="searchFormRef" :inline="true" :model="searchData">
-        <el-form-item prop="nickname" label="昵称">
+        <el-form-item label="昵称" prop="nickname">
           <el-input v-model="searchData.nickname" placeholder="请输入" />
         </el-form-item>
-        <el-form-item prop="createTime" label="创建时间">
+        <el-form-item label="创建时间" prop="createTime">
           <el-input v-model="searchData.createTime[0]" placeholder="请输入" />
         </el-form-item>
-        <el-form-item prop="updateTime" label="更新时间">
+        <el-form-item label="更新时间" prop="updateTime">
           <el-input v-model="searchData.updateTime[0]" placeholder="请输入" />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :icon="Search" @click="handleSearch">查询</el-button>
+          <el-button :icon="Search" type="primary" @click="handleSearch">查询</el-button>
           <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
         </el-form-item>
       </el-form>
@@ -356,65 +356,65 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getUser
     <el-card v-loading="loading" shadow="never">
       <div class="toolbar-wrapper">
         <div>
-          <el-button type="primary" :icon="CirclePlus" @click="handleOpenAdd">新增用户</el-button>
+          <el-button :icon="CirclePlus" type="primary" @click="handleOpenAdd">新增用户</el-button>
           <!-- <el-button type="danger" :icon="Delete">批量删除</el-button> -->
         </div>
         <div>
           <el-tooltip content="下载">
-            <el-button type="primary" :icon="Download" circle />
+            <el-button :icon="Download" circle type="primary" />
           </el-tooltip>
           <el-tooltip content="刷新表格">
-            <el-button type="primary" :icon="RefreshRight" circle @click="handleRefresh" />
+            <el-button :icon="RefreshRight" circle type="primary" @click="handleRefresh" />
           </el-tooltip>
         </div>
       </div>
       <div class="table-wrapper">
         <el-table :data="userList">
-          <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="id" label="id" align="center" sortable />
-          <el-table-column prop="username" label="用户名" align="center" />
-          <el-table-column prop="nickname" label="昵称" align="center" />
-          <el-table-column key="roles" prop="roles" label="身份" align="center" :formatter="rolesData">
+          <el-table-column align="center" type="selection" width="50" />
+          <el-table-column align="center" label="id" prop="id" sortable />
+          <el-table-column align="center" label="用户名" prop="username" />
+          <el-table-column align="center" label="昵称" prop="nickname" />
+          <el-table-column key="roles" :formatter="rolesData" align="center" label="身份" prop="roles">
             <!-- <template #default="scope">
               <el-tag v-if="scope.row.roles.name === 'sys_admin'" effect="plain">sys_admin</el-tag>
               <el-tag v-else type="warning" effect="plain">{{ scope.row.roles.name }}</el-tag>
             </template> -->
           </el-table-column>
-          <el-table-column prop="institutionId" label="博物馆" align="center">
+          <el-table-column align="center" label="博物馆" prop="institutionId">
             <template #default="scope">
-              <el-tag v-if="scope.row.institutionId === null" type="danger" effect="plain">暂无</el-tag>
+              <el-tag v-if="scope.row.institutionId === null" effect="plain" type="danger">暂无</el-tag>
               <!-- <el-tag v-else type="success" effect="plain" @click="getMuseumName(scope.row)">{{
                 scope.row.institution === undefined ? "查看" : scope.row.institution
               }}</el-tag> -->
-              <el-tag v-else type="success" effect="plain">{{ getMuseumName(scope.row) }}</el-tag>
+              <el-tag v-else effect="plain" type="success">{{ getMuseumName(scope.row) }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="phone" label="手机号" align="center" />
-          <el-table-column prop="email" label="邮箱" align="center" />
-          <el-table-column prop="enabled" label="状态" align="center" sortable>
+          <el-table-column align="center" label="手机号" prop="phone" />
+          <el-table-column align="center" label="邮箱" prop="email" />
+          <el-table-column align="center" label="状态" prop="enabled" sortable>
             <template #default="scope">
-              <el-tag v-if="scope.row.enabled" type="success" effect="plain">启用</el-tag>
-              <el-tag v-else type="danger" effect="plain">禁用</el-tag>
+              <el-tag v-if="scope.row.enabled" effect="plain" type="success">启用</el-tag>
+              <el-tag v-else effect="plain" type="danger">禁用</el-tag>
             </template>
           </el-table-column>
-          <el-table-column key="roles" prop="roles" label="创建时间" align="center" :formatter="rolesData2" sortable />
-          <el-table-column fixed="right" label="操作" width="150" align="center">
+          <el-table-column key="roles" :formatter="rolesData2" align="center" label="创建时间" prop="roles" sortable />
+          <el-table-column align="center" fixed="right" label="操作" width="150">
             <template #default="scope">
-              <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
-              <el-button type="primary" text bg size="small" @click="openReset(scope.row)">重置密码</el-button>
-              <el-button type="danger" text bg size="small" @click="handleChange(scope.row)">切换状态</el-button>
+              <el-button bg size="small" text type="primary" @click="handleUpdate(scope.row)">修改</el-button>
+              <el-button bg size="small" text type="primary" @click="openReset(scope.row)">重置密码</el-button>
+              <el-button bg size="small" text type="danger" @click="handleChange(scope.row)">切换状态</el-button>
             </template>
           </el-table-column>
         </el-table>
       </div>
       <div class="pager-wrapper">
         <el-pagination
-          background
+          :currentPage="paginationData.currentPage"
           :layout="paginationData.layout"
+          :page-size="paginationData.pageSize"
           :page-sizes="paginationData.pageSizes"
           :total="paginationData.total"
-          :page-size="paginationData.pageSize"
-          :currentPage="paginationData.currentPage"
+          background
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
         />
@@ -425,33 +425,33 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getUser
     <el-dialog
       v-model="dialogVisible"
       :title="currentUpdateId === undefined ? '新增用户' : '修改用户'"
-      @close="resetForm"
       width="30%"
+      @close="resetForm"
     >
-      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
-        <el-form-item prop="username" label="用户名">
+      <el-form ref="formRef" :model="formData" :rules="formRules" label-position="left" label-width="100px">
+        <el-form-item label="用户名" prop="username">
           <el-input v-model="formData.username" placeholder="请输入用户名" />
         </el-form-item>
-        <el-form-item prop="nickname" label="昵称">
+        <el-form-item label="昵称" prop="nickname">
           <el-input v-model="formData.nickname" placeholder="请输入昵称" />
         </el-form-item>
-        <el-form-item v-if="currentUpdateId === undefined" prop="password" label="密码">
-          <el-input show-password v-model="formData.password" placeholder="请输入密码" type="password" />
+        <el-form-item v-if="currentUpdateId === undefined" label="密码" prop="password">
+          <el-input v-model="formData.password" placeholder="请输入密码" show-password type="password" />
         </el-form-item>
-        <el-form-item prop="role" label="身份">
+        <el-form-item label="身份" prop="role">
           <el-select v-model="roleChosen" multiple placeholder="请选择身份">
             <el-option v-for="item in roleList" :key="item.id" :label="item.name" :value="item.id" />
           </el-select>
         </el-form-item>
-        <el-form-item prop="institution" label="所属博物馆">
+        <el-form-item label="所属博物馆" prop="institution">
           <el-select v-model="museumChosen" placeholder="请选择博物馆">
             <el-option v-for="item in museumList" :key="item.id" :label="item.name" :value="item.id" />
           </el-select>
         </el-form-item>
-        <el-form-item prop="email" label="邮箱">
+        <el-form-item label="邮箱" prop="email">
           <el-input v-model="formData.email" placeholder="请输入邮箱" />
         </el-form-item>
-        <el-form-item prop="phone" label="电话">
+        <el-form-item label="电话" prop="phone">
           <el-input v-model="formData.phone" placeholder="请输入电话" />
         </el-form-item>
       </el-form>
@@ -462,21 +462,21 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getUser
     </el-dialog>
 
     <!-- 重置密码组件 -->
-    <el-dialog title="重置密码" v-model="resetPwdFormVisible" :close-on-click-modal="false" center>
-      <el-form :model="resetPwdForm" label-width="80px" :rules="resetPwdFormRules" ref="resetPwdFormRef">
-        <el-row type="flex" justify="center" align="middle">
+    <el-dialog v-model="resetPwdFormVisible" :close-on-click-modal="false" center title="重置密码">
+      <el-form ref="resetPwdFormRef" :model="resetPwdForm" :rules="resetPwdFormRules" label-width="80px">
+        <el-row align="middle" justify="center" type="flex">
           <el-form-item label="新密码" prop="password">
-            <el-input show-password type="password" v-model="resetPwdForm.password" auto-complete="off" />
+            <el-input v-model="resetPwdForm.password" auto-complete="off" show-password type="password" />
           </el-form-item>
         </el-row>
-        <el-row type="flex" justify="center" align="middle">
+        <el-row align="middle" justify="center" type="flex">
           <el-form-item label="确认密码" prop="confirmpassword">
-            <el-input show-password type="password" v-model="resetPwdForm.confirmpassword" auto-complete="off" />
+            <el-input v-model="resetPwdForm.confirmpassword" auto-complete="off" show-password type="password" />
           </el-form-item>
         </el-row>
-        <el-row type="flex" justify="center" align="middle">
+        <el-row align="middle" justify="center" type="flex">
           <el-button @click="resetPwdFormVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleResetPwd" :loading="editLoading">确认重置</el-button>
+          <el-button :loading="editLoading" type="primary" @click="handleResetPwd">确认重置</el-button>
         </el-row>
       </el-form>
     </el-dialog>
@@ -486,6 +486,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getUser
 <style lang="scss" scoped>
 .search-wrapper {
   margin-bottom: 20px;
+
   :deep(.el-card__body) {
     padding-bottom: 2px;
   }

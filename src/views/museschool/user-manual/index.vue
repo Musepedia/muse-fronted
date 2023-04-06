@@ -3,17 +3,15 @@ import MuseschoolHeader from "@/views/museschool/components/museschool-header.vu
 </script>
 
 <template>
-  <el-container class="homepage">
+  <div class="user-manual">
     <el-header class="header">
-      <museschool-header active-name="homepage" />
+      <museschool-header active-name="user-manual" />
     </el-header>
-    <el-main>main</el-main>
-    <el-footer>foot</el-footer>
-  </el-container>
+  </div>
 </template>
 
 <style lang="scss" scoped>
-.homepage {
+.user-manual {
   width: 100%;
   height: 100%;
   background: rgb(232, 233, 238);

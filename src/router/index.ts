@@ -158,6 +158,30 @@ export const constantRoutes: RouteRecordRaw[] = [
         component: () => import("@/views/museschool/manual-preview/index.vue"),
         name: "manual-preview",
         props: true
+      },
+      {
+        path: "user-manual",
+        component: () => import("@/views/museschool/user-manual/index.vue"),
+        name: "user-manual",
+        meta: {
+          title: "我的手册"
+        }
+      },
+      {
+        path: "tutorial",
+        component: () => import("@/views/museschool/tutorial/index.vue"),
+        name: "tutorial",
+        meta: {
+          title: "教程培训"
+        }
+      },
+      {
+        path: "manual-template",
+        component: () => import("@/views/museschool/manual-template/index.vue"),
+        name: "manual-template",
+        meta: {
+          title: "风格模版"
+        }
       }
     ]
   },

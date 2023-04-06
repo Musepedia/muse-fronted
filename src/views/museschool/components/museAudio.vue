@@ -43,7 +43,7 @@ async function playPauseAudio() {
 </script>
 
 <template>
-  <div :style="componentStyle" class="app-container">
+  <div :style="componentStyle" class="muse-Audio">
     <el-icon class="el-icon">
       <VideoPlay v-if="ifPlaying" @click="playPauseAudio" />
       <VideoPause v-if="!ifPlaying" @click="playPauseAudio" />
@@ -53,7 +53,7 @@ async function playPauseAudio() {
 </template>
 
 <style lang="scss" scoped>
-.app-container {
+.muse-Audio {
   width: 100%;
   height: 100%;
 

@@ -632,7 +632,7 @@ function beforeunloadHandler() {
 </script>
 
 <template>
-  <div class="app-container">
+  <div class="manual-design">
     <div class="header">
       <div class="logo">
         <el-image :src="museschool_logo" style="height: 80%">
@@ -1041,7 +1041,7 @@ function beforeunloadHandler() {
 </template>
 
 <style lang="scss" scoped>
-.app-container {
+.manual-design {
   width: 100%;
   height: 100%;
   background: rgb(232, 233, 238);

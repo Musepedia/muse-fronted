@@ -44,13 +44,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <div :style="componentStyle" class="app-container">
+  <div :style="componentStyle" class="muse-text">
     <span>{{ props.componentProps.content }}</span>
   </div>
 </template>
 
 <style lang="scss" media="print" scoped>
-.app-container {
+.muse-text {
   width: 100%;
   height: 100%;
 }

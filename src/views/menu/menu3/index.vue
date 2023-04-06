@@ -348,7 +348,7 @@ background-color: rgb(104,143,235);
 color: black;
 border-radius: 10px;
 }
-:deep().el-calendar-table .prev .el-calendar-day:hover, 
+:deep().el-calendar-table .prev .el-calendar-day:hover,
 :deep().el-calendar-table .next .el-calendar-day:hover {
 color: gray;
 background-color: #fff;

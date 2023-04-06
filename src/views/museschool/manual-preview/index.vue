@@ -51,7 +51,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="app-container">
+  <div class="muse-preview">
     <div class="export">
       <el-button color="#2565F1" icon="Download" @click="window.print()">导出</el-button>
     </div>
@@ -102,7 +102,7 @@ onUnmounted(() => {
   }
 }
 
-.app-container {
+.muse-preview {
   width: 100%;
   display: flex;
   flex-direction: column;

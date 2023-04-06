@@ -1,14 +1,14 @@
 <script lang="ts" setup>
-import { nextTick, reactive, ref, watch } from "vue"
+import { reactive, ref, watch } from "vue"
 import { useUserStoreHook } from "@/store/modules/user"
 import { getZoneListApi } from "@/api/MuseumZone"
 import { useRouter } from "vue-router"
 import { getExhibitListApi } from "@/api/MuseumExhibit"
 import { getMuseumListApi } from "@/api/adminMuseum"
-import { getQuestionListApi, updateQuestionApi, getOneQuestionApi } from "@/api/question"
-import { ElMessage, type FormInstance, type FormRules, ElMessageBox, ElInput } from "element-plus"
+import { getQuestionListApi, updateQuestionApi } from "@/api/question"
+import { ElInput, ElMessage, type FormInstance, type FormRules } from "element-plus"
 import { usePagination } from "@/hooks/usePagination"
-import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight, Plus } from "@element-plus/icons-vue"
+import { Refresh, Search } from "@element-plus/icons-vue"
 // import { PageFooter } from "@/layout/components"
 
 const router = useRouter()
@@ -388,13 +388,13 @@ watch(zoneChosen, getExhibitList, { immediate: true })
     <!-- 选择博物馆 组件 -->
     <el-dialog
       v-model="choseMuseumDialogVisible"
-      title="请选择一个博物馆"
-      width="30%"
-      style="display: block"
       :before-close="handleChoseMuseumClose"
       loading="loading"
+      style="display: block"
+      title="请选择一个博物馆"
+      width="30%"
     >
-      <el-select style="margin: auto" v-model="museumChosen" placeholder="请选择博物馆">
+      <el-select v-model="museumChosen" placeholder="请选择博物馆" style="margin: auto">
         <el-option v-for="item in museumList" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
       <template #footer>
@@ -406,16 +406,16 @@ watch(zoneChosen, getExhibitList, { immediate: true })
     <el-row class="search-wrapper">
       <el-button
         v-if="userStore.roles[0] === 'sys_admin'"
-        type="info"
         plain
         style="margin-right: 5px"
+        type="info"
         @click="handleChoseMuseumAgain"
-        >选择博物馆</el-button
-      >
+        >选择博物馆
+      </el-button>
     </el-row>
 
     <!-- 查询索引框 -->
-    <el-card v-loading="loading" shadow="never" class="search-wrapper">
+    <el-card v-loading="loading" class="search-wrapper" shadow="never">
       <el-form ref="searchFormRef" :inline="true" :model="searchData" label-position="left">
         <!-- <el-form-item prop="createTime" label="创建时间">
           <el-input v-model="searchData.createTime[0]" placeholder="请输入" />
@@ -424,26 +424,26 @@ watch(zoneChosen, getExhibitList, { immediate: true })
           <el-input v-model="searchData.updateTime[0]" placeholder="请输入" />
         </el-form-item> -->
         <el-form-item label="展区展品">
-          <el-select style="width: 250px" v-model="zoneChosen" placeholder="请选择展区" @change="handleZoneChange">
+          <el-select v-model="zoneChosen" placeholder="请选择展区" style="width: 250px" @change="handleZoneChange">
             <el-option v-for="item in zoneList" :key="item.id" :label="item.name" :value="item.id" />
           </el-select>
-          <el-select style="margin: 5px 5px; width: 250px" v-model="exhibitChosen" placeholder="请选择展品">
+          <el-select v-model="exhibitChosen" placeholder="请选择展品" style="margin: 5px 5px; width: 250px">
             <el-option v-for="item in exhibitList" :key="item.id" :label="item.label" :value="item.id" />
           </el-select>
         </el-form-item>
-        <el-form-item prop="answerType" label="答案类型">
-          <el-select style="width: 250px" v-model="searchData.answerType" placeholder="请选择答案类型">
+        <el-form-item label="答案类型" prop="answerType">
+          <el-select v-model="searchData.answerType" placeholder="请选择答案类型" style="width: 250px">
             <el-option v-for="item in typeList" :key="item.id" :label="item.label" :value="item.id" />
           </el-select>
         </el-form-item>
-        <el-form-item prop="questionText" label="问题文本">
-          <el-input style="width: 250px" v-model="searchData.questionText" placeholder="请输入" />
+        <el-form-item label="问题文本" prop="questionText">
+          <el-input v-model="searchData.questionText" placeholder="请输入" style="width: 250px" />
         </el-form-item>
-        <el-form-item prop="answerText" label="回答文本">
-          <el-input style="width: 250px" v-model="searchData.answerText" placeholder="请输入" />
+        <el-form-item label="回答文本" prop="answerText">
+          <el-input v-model="searchData.answerText" placeholder="请输入" style="width: 250px" />
         </el-form-item>
         <el-form-item style="float: right">
-          <el-button type="primary" :icon="Search" @click="handleSearch">查询</el-button>
+          <el-button :icon="Search" type="primary" @click="handleSearch">查询</el-button>
           <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
         </el-form-item>
       </el-form>
@@ -451,8 +451,8 @@ watch(zoneChosen, getExhibitList, { immediate: true })
 
     <!-- 问题陈列 -->
     <el-row>
-      <el-col v-for="(item, index) in questionList" :key="item.id" :span="6" :offset="index % 3 === 0 ? 2 : 1">
-        <el-card style="margin-bottom: 10px" :body-style="{ padding: '0px' }" shadow="hover">
+      <el-col v-for="(item, index) in questionList" :key="item.id" :offset="index % 3 === 0 ? 2 : 1" :span="6">
+        <el-card :body-style="{ padding: '0px' }" shadow="hover" style="margin-bottom: 10px">
           <div class="question-block">
             <span>{{ item.questionText }}</span>
           </div>
@@ -466,10 +466,10 @@ watch(zoneChosen, getExhibitList, { immediate: true })
               >所属展品：<el-tag>{{ item.exhibitName ? item.exhibitName : "无" }}</el-tag></span
             >
             <span style="margin-left: 15px">
-              <el-tag v-if="item.answerType === 1" type="success" effect="plain">文本答案</el-tag>
-              <el-tag v-else-if="item.answerType === 2" type="success" effect="plain">地图答案</el-tag>
-              <el-tag v-else-if="item.answerType === 3" type="success" effect="plain">图片答案</el-tag>
-              <el-tag v-else type="danger" effect="plain">无法回答</el-tag>
+              <el-tag v-if="item.answerType === 1" effect="plain" type="success">文本答案</el-tag>
+              <el-tag v-else-if="item.answerType === 2" effect="plain" type="success">地图答案</el-tag>
+              <el-tag v-else-if="item.answerType === 3" effect="plain" type="success">图片答案</el-tag>
+              <el-tag v-else effect="plain" type="danger">无法回答</el-tag>
             </span>
             <div class="bottom">
               <el-button class="button" @click="handleDetails(item)">查看</el-button>
@@ -487,12 +487,12 @@ watch(zoneChosen, getExhibitList, { immediate: true })
     <!-- 分页 组件 -->
     <div class="pager-wrapper">
       <el-pagination
-        background
+        :currentPage="paginationData.currentPage"
         :layout="paginationData.layout"
+        :page-size="paginationData.pageSize"
         :page-sizes="paginationData.pageSizes"
         :total="paginationData.total"
-        :page-size="paginationData.pageSize"
-        :currentPage="paginationData.currentPage"
+        background
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
       />
@@ -502,16 +502,16 @@ watch(zoneChosen, getExhibitList, { immediate: true })
     <el-dialog v-model="detailDialogVisible" title="问题详情" @close="detailDialogVisible = false">
       <el-descriptions :column="1" border>
         <el-descriptions-item label="问题: ">{{ questionTextDetail }}</el-descriptions-item>
-        <el-descriptions-item label="所属博物馆-展品: ">{{
-          museumNameDetail + " -- " + exhibitNameDetail
-        }}</el-descriptions-item>
+        <el-descriptions-item label="所属博物馆-展品: "
+          >{{ museumNameDetail + " -- " + exhibitNameDetail }}
+        </el-descriptions-item>
         <el-descriptions-item label="答案类型: ">
           <el-tag>{{ answerTypeDetail }}</el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="回答: ">
           <div v-if="isChangable === false">
             {{ answerTextDetail }}
-            <el-button type="warning" plain @click="isChangable = true">修改回答</el-button>
+            <el-button plain type="warning" @click="isChangable = true">修改回答</el-button>
           </div>
           <div v-else>
             <el-input v-model="answerTextDetail" placeholder="请输入回答" />
@@ -525,27 +525,27 @@ watch(zoneChosen, getExhibitList, { immediate: true })
     </el-dialog>
 
     <!-- 问题修改 组件 -->
-    <el-dialog v-model="dialogVisible" :title="questionTextDetail" @close="resetForm" width="50%">
+    <el-dialog v-model="dialogVisible" :title="questionTextDetail" width="50%" @close="resetForm">
       <el-form
         ref="questionFormRef"
         :model="questionForm"
         :rules="questionFormRules"
-        label-width="100px"
         label-position="left"
+        label-width="100px"
       >
-        <el-form-item prop="answerText" label="回答文本">
+        <el-form-item label="回答文本" prop="answerText">
           <el-input v-model="questionForm.answerText" placeholder="请输入回答文本" />
         </el-form-item>
-        <el-form-item prop="answerType" label="答案类型">
+        <el-form-item label="答案类型" prop="answerType">
           <el-select v-model="questionForm.answerType" placeholder="请选择答案类型">
             <el-option v-for="item in typeList" :key="item.id" :label="item.label" :value="item.id" />
           </el-select>
         </el-form-item>
-        <el-form-item prop="exhibitName" label="所属展品">
-          <el-select v-model="zoneUpdated" placeholder="请选择展区" @change="handleZoneUpdated" clearable>
+        <el-form-item label="所属展品" prop="exhibitName">
+          <el-select v-model="zoneUpdated" clearable placeholder="请选择展区" @change="handleZoneUpdated">
             <el-option v-for="item in zoneList" :key="item.id" :label="item.name" :value="item.id" />
           </el-select>
-          <el-select style="margin: 5px 5px" v-model="exhibitUpdated" placeholder="请选择展品" clearable>
+          <el-select v-model="exhibitUpdated" clearable placeholder="请选择展品" style="margin: 5px 5px">
             <el-option v-for="item in exhibitUpdatedList" :key="item.id" :label="item.label" :value="item.id" />
           </el-select>
         </el-form-item>
@@ -568,16 +568,19 @@ watch(zoneChosen, getExhibitList, { immediate: true })
   margin-bottom: 20px;
   align-items: center;
   justify-content: flex-end;
+
   :deep(.el-button.is-plain) {
     --el-button-text-color: #292929;
     --el-button-border-color: #1f1f1f;
     --el-button-hover-text-color: #f5f3f3;
   }
 }
+
 :deep(.el-card) {
   border-radius: 10px;
   background-color: #fefefe;
 }
+
 .question-block {
   padding: 30px 0;
   text-align: center;
@@ -590,6 +593,7 @@ watch(zoneChosen, getExhibitList, { immediate: true })
   justify-content: center;
   vertical-align: middle;
 }
+
 .answer-block {
   width: 100%;
   height: 110px;
@@ -605,28 +609,33 @@ watch(zoneChosen, getExhibitList, { immediate: true })
   vertical-align: middle;
   overflow: auto;
 }
+
 .bottom {
   margin-top: 15px;
   display: flex;
   vertical-align: middle;
 }
+
 .button {
   margin-left: 0;
   margin-right: 3px;
   padding: 8px 10px;
   width: 60px;
 }
+
 .add-icon-container {
   margin-bottom: 10px;
   height: 280px;
   display: flex;
   justify-content: center;
+
   :deep(.el-card__body) {
     display: flex;
     justify-content: center;
     align-items: center;
   }
 }
+
 .imageCarousel-item {
   text-align: center;
   // border-right: solid 1px var(--el-border-color);
@@ -640,6 +649,7 @@ watch(zoneChosen, getExhibitList, { immediate: true })
   //   height: 550px;
   // }
 }
+
 :deep(.el-carousel__container) {
   text-align: center;
   // border-right: solid 1px var(--el-border-color);
@@ -650,11 +660,13 @@ watch(zoneChosen, getExhibitList, { immediate: true })
   justify-content: center;
   vertical-align: middle;
 }
+
 :deep(.exhibit-text) {
   white-space: normal;
   height: auto;
   margin: 0.5rem;
 }
+
 :deep(.button-new-tag) {
   margin: 0.5rem;
 }

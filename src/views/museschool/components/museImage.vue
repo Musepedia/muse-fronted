@@ -26,13 +26,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <div :style="componentStyle" class="app-container">
+  <div :style="componentStyle" class="muse-image">
     <el-image :src="props.componentProps.url" class="image" />
   </div>
 </template>
 
 <style lang="scss" media="print" scoped>
-.app-container {
+.muse-image {
   width: 100%;
   height: 100%;
 

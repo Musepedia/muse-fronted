@@ -1,10 +1,8 @@
 <script lang="ts" setup>
 import { reactive, ref } from "vue"
-import { useRouter } from "vue-router"
-import { useUserStore } from "@/store/modules/user"
 import { useUserStoreHook } from "@/store/modules/user"
 import { type FormInstance, FormRules } from "element-plus"
-import { type UserData, type UpdateUserData, updateUserInfo } from "@/api/userInfo"
+import { updateUserInfo, type UserData } from "@/api/userInfo"
 import { getMuseInfoById } from "@/api/adminMuseum"
 
 const userStore = useUserStoreHook()
@@ -106,7 +104,7 @@ createInfo()
 
 <template>
   <div class="app-container center">
-    <el-descriptions class="margin-top" title="个人信息" :column="2" border>
+    <el-descriptions :column="2" border class="margin-top" title="个人信息">
       <template v-slot:extra>
         <el-button type="primary" @click="openUserEdit">修改</el-button>
       </template>
@@ -118,38 +116,38 @@ createInfo()
       <el-descriptions-item label="博物馆">{{ UserForm.museum }}</el-descriptions-item>
     </el-descriptions>
 
-    <el-dialog title="修改个人信息" v-model="setUserFormVisible" :close-on-click-modal="false" center>
-      <el-form :model="UserForm" label-width="80px" :rules="UserFormRules" ref="UserFormRef">
-        <el-row type="flex" justify="center" align="middle">
+    <el-dialog v-model="setUserFormVisible" :close-on-click-modal="false" center title="修改个人信息">
+      <el-form ref="UserFormRef" :model="UserForm" :rules="UserFormRules" label-width="80px">
+        <el-row align="middle" justify="center" type="flex">
           <el-form-item label="昵称" prop="nickname">
             <el-input v-model="UserForm.nickname" />
           </el-form-item>
         </el-row>
-        <el-row type="flex" justify="center" align="middle">
+        <el-row align="middle" justify="center" type="flex">
           <el-form-item label="邮箱" prop="email">
             <el-autocomplete
-              class="inline-input"
               v-model="UserForm.email"
               :fetch-suggestions="oldEmail"
+              class="inline-input"
               @select="handleSelect1"
             />
             <!-- <el-input v-model="UserForm.email" auto-complete="off" /> -->
           </el-form-item>
         </el-row>
-        <el-row type="flex" justify="center" align="middle">
+        <el-row align="middle" justify="center" type="flex">
           <el-form-item label="电话" prop="phone">
             <el-autocomplete
-              class="inline-input"
               v-model="UserForm.phone"
               :fetch-suggestions="oldPhone"
+              class="inline-input"
               @select="handleSelect2"
             />
             <!-- <el-input v-model="UserForm.phone" auto-complete="off" /> -->
           </el-form-item>
         </el-row>
-        <el-row type="flex" justify="center" align="middle">
+        <el-row align="middle" justify="center" type="flex">
           <el-button @click="setUserFormVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleUserEdit" :loading="editLoading">提交修改</el-button>
+          <el-button :loading="editLoading" type="primary" @click="handleUserEdit">提交修改</el-button>
         </el-row>
       </el-form>
     </el-dialog>
@@ -163,6 +161,7 @@ createInfo()
   justify-content: left;
   align-items: top;
 }
+
 :deep(.el-descriptions__body .el-descriptions__table.is-bordered .el-descriptions__cell) {
   padding: 10px 45px;
   //text-align: center;
