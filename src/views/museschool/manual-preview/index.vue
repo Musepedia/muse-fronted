@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted, ref } from "vue"
 import GeneralComponent from "../components/generalComponent.vue"
 import { useMuseschoolStore } from "@/store/modules/museschool"
+import { getComponentList } from "@/utils/cache/localStorage"
 
 const museschoolStore = useMuseschoolStore()
 
@@ -17,7 +18,7 @@ const rowHeight = ref(10) //应该根据设计页面的等比例放大，保证�
 
 onMounted(() => {
   if (componentList.length == 0) {
-    const storedComponentList = JSON.parse(localStorage.getItem("componentList")!)
+    const storedComponentList = getComponentList()
     if (storedComponentList) {
       for (let i = 0; i < storedComponentList.length; i++) {
         componentList.push(storedComponentList[i])
@@ -26,11 +27,10 @@ onMounted(() => {
   }
 
   //监听页面窗口大小变化
-  window.addEventListener("resize", handleResize)
+  window.addEventListener("resize", resizeHandler)
 
   //计算行高
-  rowHeight.value =
-    10 * ((manual.value as unknown as HTMLElement).getBoundingClientRect().width / museschoolStore.designZoneWidth)
+  resizeHandler()
 
   //直接导出
   if (museschoolStore.exportManual) {
@@ -42,15 +42,15 @@ onMounted(() => {
 
 onUnmounted(() => {
   //移除事件监听器
-  window.removeEventListener("resize", handleResize)
+  window.removeEventListener("resize", resizeHandler)
 })
 
 //监听页面窗口大小变化，重新计算行高
-function handleResize() {
-  rowHeight.value =
-    10 * ((manual.value as unknown as HTMLElement).getBoundingClientRect().width / museschoolStore.designZoneWidth)
+function resizeHandler() {
+  rowHeight.value = (manual.value as unknown as HTMLElement).getBoundingClientRect().width / colNum.value
 }
 
+//导出手册
 function exportManual() {
   window.print()
 }
@@ -110,7 +110,6 @@ function exportManual() {
 
 .app-container {
   width: 100%;
-  background: white;
   display: flex;
   flex-direction: column;
   align-content: center;
