@@ -1,13 +1,14 @@
 import { request } from "@/utils/service"
 import { getToken } from "@/utils/cache/cookies"
+import qs from "qs"
 
 /** 查 */
 interface IGetMuseumListApi {
   current: number
   size: number
   name?: string
-  createTime?: string[]
-  updateTime?: string[]
+  createTime?: number[]
+  updateTime?: number[]
   order?: string
 }
 /** 增 */

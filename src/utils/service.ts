@@ -1,8 +1,21 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig } from "axios"
+import qs from "qs"
 import { useUserStoreHook } from "@/store/modules/user"
 import { ElMessage } from "element-plus"
 import { get } from "lodash-es"
 import { getToken } from "./cache/cookies"
+
+let judgArr = function (params: any) {
+  let res = false
+  if (params instanceof Object) {
+    Object.keys(params).forEach((key) => {
+      if (Array.isArray(params[key])) {
+        res = true
+      }
+    })
+  }
+  return res
+}
 
 /** 创建请求实例 */
 function createService() {
@@ -10,7 +23,18 @@ function createService() {
   const service = axios.create()
   // 请求拦截
   service.interceptors.request.use(
-    (config) => config,
+    (config) => {
+      if (config.method === "get" && config.params !== null) {
+        if (judgArr(config.params)) {
+          config.paramsSerializer = {
+            serialize: function (params) {
+              return qs.stringify(params, { arrayFormat: "repeat" })
+            }
+          }
+        }
+      }
+      return config
+    },
     // 发送失败
     (error) => Promise.reject(error)
   )

@@ -8,7 +8,7 @@ import {
   changeMuseumServiceApi,
   uploadFile
 } from "@/api/adminMuseum"
-import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
+import { type FormInstance, type FormRules, ElMessage, ElMessageBox, DateModelType } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import loadBMap from "@/utils/loadMap"
@@ -380,20 +380,54 @@ const handleUpdateOpen = (row: any) => {
 //#region 查
 /** 获取博物馆列表 */
 const museumList = ref<any[]>([])
-const getMuseumList = () => {
+const createTime = ref<any[]>([])
+const updateTime = ref<any[]>([])
+
+const dealWithTime = () => {
+  const p1 = Promise.resolve(true)
+  const pList = ref<any[]>([])
+  pList.value[0] = p1
+  pList.value[1] = new Promise((resolve) => {
+    if (searchData.createTime === undefined) {
+      resolve(true)
+    } else {
+      searchData.createTime.forEach(function (item: any) {
+        const start: number = new Date(item).getTime() as number
+        createTime.value.push(start)
+      })
+      resolve(true)
+    }
+  })
+  pList.value[2] = new Promise((resolve) => {
+    if (searchData.updateTime === undefined) {
+      resolve(true)
+    } else {
+      searchData.updateTime.forEach(function (item: any) {
+        const start1: number = new Date(item).getTime() as number
+        updateTime.value.push(start1)
+      })
+      resolve(true)
+    }
+  })
+  return Promise.all(pList.value)
+}
+
+const getMuseumList = async () => {
   loading.value = true
+  // console.log(createTime.value)
+  await dealWithTime()
   getMuseumListApi({
     current: paginationData.currentPage,
     size: paginationData.pageSize,
     name: searchData.name || undefined,
-    createTime: searchData.createTime || undefined,
-    updateTime: searchData.updateTime || undefined,
+    createTime: createTime.value || undefined,
+    updateTime: updateTime.value || undefined,
     order: searchData.order || undefined
   })
     .then((res: any) => {
       paginationData.total = res.data.data.total
       museumList.value = res.data.data.data
-      console.log(res.data)
+      // console.log(res.data)
     })
     .catch(() => {
       museumList.value = []
@@ -455,8 +489,8 @@ const shortcuts = [
 const searchData = reactive({
   name: "",
   order: "",
-  createTime: [],
-  updateTime: []
+  createTime: [] as any[],
+  updateTime: [] as any[]
 })
 const handleSearch = () => {
   if (paginationData.currentPage === 1) {
@@ -488,18 +522,26 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getMuse
           <el-input v-model="searchData.name" placeholder="请输入" />
         </el-form-item>
         <el-form-item prop="createTime" label="创建时间" class="datepicker">
-          <el-input v-model="searchData.createTime[0]" placeholder="请输入" />
-          <!-- <el-date-picker
+          <!-- <el-input v-model="searchData.createTime[0]" placeholder="请输入" /> -->
+          <el-date-picker
             v-model="searchData.createTime"
             type="datetimerange"
             :shortcuts="shortcuts"
             range-separator="To"
             start-placeholder="Start date"
             end-placeholder="End date"
-          /> -->
+          />
         </el-form-item>
         <el-form-item prop="updateTime" label="更新时间">
-          <el-input v-model="searchData.updateTime[0]" placeholder="请输入" />
+          <!-- <el-input v-model="searchData.updateTime[0]" placeholder="请输入" /> -->
+          <el-date-picker
+            v-model="searchData.updateTime"
+            type="datetimerange"
+            :shortcuts="shortcuts"
+            range-separator="To"
+            start-placeholder="Start date"
+            end-placeholder="End date"
+          />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="handleSearch">查询</el-button>

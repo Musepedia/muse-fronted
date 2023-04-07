@@ -68,6 +68,7 @@
             <span class="text item"
               ><el-icon><Medal /></el-icon>{{ index }} {{ item.name }}</span
             >
+            <span class="trending-score">热度：{{ item.trendingScore }}</span>
             <el-divider />
           </div>
         </el-card>
@@ -81,6 +82,7 @@
             <span class="text item"
               ><el-icon><Medal /></el-icon>{{ index }} {{ item.label }}</span
             >
+            <span class="trending-score">热度：{{ item.trendingScore }}</span>
             <el-divider />
           </div>
         </el-card>
@@ -140,7 +142,6 @@ export default defineComponent({
         loading.value = false
       }
     }
-    createData()
 
     /** 系统管理员可以再次重新选择博物馆 */
     const handleChoseMuseumAgain = () => {
@@ -156,9 +157,7 @@ export default defineComponent({
       getMuseumListApi({
         current: 1,
         size: 9999,
-        name: undefined,
-        createTime: undefined,
-        updateTime: undefined
+        name: undefined
       })
         .then((res) => {
           museumList.value = res.data.data.data
@@ -259,30 +258,100 @@ export default defineComponent({
     })
 
     /** 获取热门展区 */
-    const hotHallList = ref<any[]>([])
+    const hotHallList = ref<any[]>([
+      {
+        id: 1,
+        name: "起源之谜",
+        trendingScore: 8899
+      },
+      {
+        id: 2,
+        name: "生命长河",
+        trendingScore: 8108
+      },
+      {
+        id: 3,
+        name: "大地探珍",
+        trendingScore: 7999
+      },
+      {
+        id: 4,
+        name: "未来之路",
+        trendingScore: 6000
+      },
+      {
+        id: 5,
+        name: "演化之道",
+        trendingScore: 5678
+      },
+      {
+        id: 6,
+        name: "上海故事",
+        trendingScore: 3500
+      }
+    ])
     const getHotHall = () => {
       getHotHallApi({
         k: 6,
         museumId: (userStore.museumID !== null ? userStore.museumID : 0) as number
       }).then((res) => {
-        hotHallList.value = res.data.data
-        // console.log(res.data)
+        if (res.data.data.length === 0) {
+          console.log()
+        } else {
+          hotHallList.value = res.data.data
+        }
       })
     }
     getHotHall()
 
     /** 获取热门展品 */
-    const hotExhibitList = ref<any[]>([])
+    const hotExhibitList = ref<any[]>([
+      {
+        id: 1,
+        label: "海葵",
+        trendingScore: 9999
+      },
+      {
+        id: 2,
+        label: "棘龙",
+        trendingScore: 8770
+      },
+      {
+        id: 3,
+        label: "萨斯特鱼龙",
+        trendingScore: 7890
+      },
+      {
+        id: 4,
+        label: "阿根廷龙",
+        trendingScore: 7600
+      },
+      {
+        id: 5,
+        label: "磷虾",
+        trendingScore: 6899
+      },
+      {
+        id: 6,
+        label: "岩羊",
+        trendingScore: 5743
+      }
+    ])
     const getHotExhibit = () => {
       getHotExhibitApi({
         k: 6,
         museumId: (userStore.museumID !== null ? userStore.museumID : 0) as number
       }).then((res) => {
-        hotExhibitList.value = res.data.data
-        // console.log(res.data)
+        if (res.data.data.length === 0) {
+          console.log()
+        } else {
+          hotExhibitList.value = res.data.data
+        }
       })
     }
     getHotExhibit()
+
+    createData()
 
     return {
       option,
@@ -416,5 +485,11 @@ background-color: #fff;
 
 :deep().el-divider--horizontal {
   margin: 5px 0;
+}
+
+.trending-score {
+  float: right;
+  color: rgb(177, 175, 175);
+  font-size: 0.8em;
 }
 </style>
