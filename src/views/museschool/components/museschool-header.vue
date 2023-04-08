@@ -30,12 +30,6 @@ const navigators = reactive([
   }
 ])
 
-//跳转
-function navigateTo(name: string) {
-  console.log(name)
-  router.push({ name: name })
-}
-
 /* 生命周期钩子 ********************************************************************************************/
 onMounted(() => {
   activeName.value = props.activeName
@@ -62,7 +56,7 @@ onMounted(() => {
         :key="navigator.name"
         :style="activeName === navigator.name ? 'background: #719eff' : ''"
         class="navigator"
-        @click="navigateTo(navigator.name)"
+        @click="router.push(navigator.name)"
       >
         {{ navigator.value }}
       </div>
