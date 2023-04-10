@@ -45,7 +45,7 @@ onMounted(() => {
 
 <template>
   <div :style="componentStyle" class="muse-text">
-    <span>{{ props.componentProps.content }}</span>
+    <text>{{ props.componentProps.content }}</text>
   </div>
 </template>
 

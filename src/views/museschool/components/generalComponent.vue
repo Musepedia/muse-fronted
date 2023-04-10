@@ -32,7 +32,7 @@ function showDeleteBtn() {
 </script>
 
 <template>
-  <div class="app-container" @mouseenter="showDeleteBtn" @mouseleave="showDelete = false">
+  <div class="general-component" @mouseenter="showDeleteBtn" @mouseleave="showDelete = false">
     <component
       :is="currentComponent"
       :componentProps="props.componentProps"
@@ -49,7 +49,7 @@ function showDeleteBtn() {
 </template>
 
 <style lang="scss" scoped>
-.app-container {
+.general-component {
   width: 100%;
   height: 100%;
   display: flex;

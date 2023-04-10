@@ -32,6 +32,8 @@ const designZoneRef = ref(null) //设计区域组件引用
 const colNum = ref(50)
 const rowHeight = ref(10)
 
+const pageHeight = ref(";height:800px") //页面高度
+
 //监听manual变化，同步修改到museschoolStore
 watch(thisManual, (newThisManual) => {
   museschoolStore.manual = newThisManual
@@ -596,7 +598,7 @@ onMounted(() => {
       })
     }
   }
-  resizeHandler() //计算行高
+  resizeHandler() //计算行高、页高
   componentsTabChangeHandler(0) //默认为组件tab
   window.addEventListener("resize", resizeHandler) //添加页面窗口大小监听器
   document.addEventListener("mousemove", mouseMoveHandler) //添加鼠标位置监听器
@@ -613,9 +615,14 @@ onUnmounted(() => {
   window.removeEventListener("beforeunload", beforeunloadHandler) //移除unload监听器
 })
 
-//监听页面窗口大小变化，重新计算行高
+//监听页面窗口大小变化，重新计算行高、页高
 function resizeHandler() {
-  rowHeight.value = (designZoneRef.value as unknown as HTMLElement).getBoundingClientRect().width / colNum.value
+  const pageWidth = (designZoneRef.value as unknown as HTMLElement).getBoundingClientRect().width * 0.96
+  pageHeight.value = ";height:" + (pageWidth * Math.sqrt(2)).toString() + "px"
+  console.log((designZoneRef.value as unknown as HTMLElement).getBoundingClientRect().height)
+  console.log(pageHeight.value)
+  console.log(pageWidth)
+  rowHeight.value = pageWidth / colNum.value
 }
 
 //鼠标拖动组件时获取鼠标位置
@@ -819,7 +826,7 @@ function beforeunloadHandler() {
         <div
           v-for="(page, pageIndex) in thisManual.pages"
           :key="pageIndex"
-          :style="page.pageInfo.background"
+          :style="page.pageInfo.background + pageHeight"
           class="muse-page"
         >
           <grid-layout
@@ -1198,15 +1205,11 @@ function beforeunloadHandler() {
       height: 100%;
       overflow-y: scroll;
 
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-
       .muse-page {
+        position: relative;
+        left: 2%;
         width: 96%;
         border-radius: 5px;
-        height: 700px;
         margin-top: 2%;
 
         .vue-grid-layout {
