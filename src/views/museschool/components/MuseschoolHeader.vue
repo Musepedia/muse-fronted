@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { Picture } from "@element-plus/icons-vue"
 import museschool_logo from "@/assets/museschool/museschool_logo.png"
-import { onMounted, reactive, ref } from "vue"
+import { reactive } from "vue"
 import { useRouter } from "vue-router"
 
 const router = useRouter()
@@ -10,7 +10,6 @@ const router = useRouter()
 const props = defineProps(["activeName"])
 
 /* 导航栏相关 ********************************************************************************************/
-const activeName = ref("homepage")
 const navigators = reactive([
   {
     value: "首页",
@@ -29,11 +28,6 @@ const navigators = reactive([
     name: "manual-template"
   }
 ])
-
-/* 生命周期钩子 ********************************************************************************************/
-onMounted(() => {
-  activeName.value = props.activeName
-})
 </script>
 
 <template>
@@ -54,7 +48,7 @@ onMounted(() => {
       <div
         v-for="navigator in navigators"
         :key="navigator.name"
-        :style="activeName === navigator.name ? 'background: #719eff' : ''"
+        :style="props.activeName === navigator.name ? 'background: #719eff' : ''"
         class="navigator"
         @click="router.push(navigator.name)"
       >

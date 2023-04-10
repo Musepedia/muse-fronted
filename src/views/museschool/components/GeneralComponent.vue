@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, markRaw, ref } from "vue"
+import { computed, markRaw, Ref, ref } from "vue"
 import museText from "./museText.vue"
 import museImage from "./museImage.vue"
 import museAudio from "./museAudio.vue"
@@ -21,7 +21,7 @@ const currentComponent = computed(() => {
 
 /* 显示/隐藏删除按钮相关 ********************************************************************************************/
 //是否可以显示删除按钮（原型组件不可删除）
-const showDelete = ref(false)
+const showDelete: Ref<boolean> = ref(false)
 
 //显示删除按钮
 function showDeleteBtn() {
@@ -42,7 +42,7 @@ function showDeleteBtn() {
     />
     <Close
       v-if="showDelete"
-      style="width: 1em; height: 1em; position: absolute; top: 0; right: 0; color: rgb(200, 200, 200)"
+      style="width: 1em; height: 1em; position: absolute; top: 0; right: 0; color: rgb(200, 200, 200); cursor: pointer"
       @click="$emit('deleteComponent')"
     />
   </div>

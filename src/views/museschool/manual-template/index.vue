@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import MuseschoolHeader from "@/views/museschool/components/museschool-header.vue"
+import MuseschoolHeader from "@/views/museschool/components/MuseschoolHeader.vue"
 </script>
 
 <template>

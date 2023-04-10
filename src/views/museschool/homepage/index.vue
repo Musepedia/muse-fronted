@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import MuseschoolHeader from "@/views/museschool/components/museschool-header.vue"
+import MuseschoolHeader from "@/views/museschool/components/MuseschoolHeader.vue"
 import { Picture } from "@element-plus/icons-vue"
 import QRCode from "@/assets/museschool/homepage/QR_code.png"
 import temp from "@/assets/museschool/homepage/temp.png"
@@ -7,7 +7,7 @@ import tutorial from "@/assets/museschool/homepage/tutorial.png"
 import excellentManual from "@/assets/museschool/homepage/excellent_manual.png"
 import newManual from "@/assets/museschool/homepage/new_manual.png"
 import manual from "@/assets/museschool/homepage/manual.png"
-import { onMounted, reactive, ref } from "vue"
+import { onMounted, reactive, Ref, ref } from "vue"
 import { useRouter } from "vue-router"
 
 const router = useRouter()
@@ -20,9 +20,9 @@ const menu = reactive([
 ])
 
 /* main中元素宽高计算相关 ********************************************************************************************/
-const carouselWidth = ref("width:150px")
-const carouselHeight = ref("150px")
-const menuHeight = ref("height:150px")
+const carouselWidth: Ref<string> = ref("width:150px")
+const carouselHeight: Ref<string> = ref("150px")
+const menuHeight: Ref<string> = ref("height:150px")
 
 /* 生命周期钩子 ********************************************************************************************/
 onMounted(() => {
@@ -30,8 +30,6 @@ onMounted(() => {
   carouselHeight.value = (window.innerHeight * 0.77 * 0.35 - 20).toString() + "px"
   carouselWidth.value = "width:" + (window.innerHeight * 0.77 * 0.35 * (1920 / 448)).toString() + "px"
   menuHeight.value = "height:" + (window.innerHeight * 0.77 * 0.65).toString() + "px"
-  console.log(carouselWidth.value)
-  console.log(carouselHeight.value)
 })
 </script>
 

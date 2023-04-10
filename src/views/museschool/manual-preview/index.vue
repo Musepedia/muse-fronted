@@ -1,18 +1,18 @@
 <script lang="ts" setup>
-import { onMounted, onUnmounted, ref } from "vue"
-import GeneralComponent from "../components/generalComponent.vue"
+import { onMounted, onUnmounted, Ref, ref } from "vue"
+import GeneralComponent from "../components/GeneralComponent.vue"
 import { useMuseschoolStore } from "@/store/modules/museschool"
 import { getManual } from "@/utils/cache/localStorage"
 
 const museschoolStore = useMuseschoolStore()
 
 /* 组件渲染相关 ********************************************************************************************/
-const manualRef = ref(null) //清单组件引用
+const manualRef = ref<HTMLInputElement | null>(null) //清单组件引用
 const componentList = museschoolStore.manual.componentList //组件列表
 
 //gridlayout列数，行高
-const colNum = ref(50) //应该根据设计页面的等比例放大，保证显示效果一致性
-const rowHeight = ref(10) //应该根据设计页面的等比例放大，保证显示效果一致性
+const colNum: Ref<number> = ref(50) //应该根据设计页面的等比例放大，保证显示效果一致性
+const rowHeight: Ref<number> = ref(10) //应该根据设计页面的等比例放大，保证显示效果一致性
 
 //监听页面窗口大小变化，重新计算行高
 function resizeHandler() {

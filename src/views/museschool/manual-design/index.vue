@@ -1,12 +1,12 @@
 <script lang="ts" setup>
-import GeneralComponent from "../components/generalComponent.vue"
-import { onMounted, onUnmounted, reactive, ref, watch } from "vue"
+import GeneralComponent from "../components/GeneralComponent.vue"
+import { onMounted, onUnmounted, reactive, Ref, ref, watch } from "vue"
 import { useRouter } from "vue-router"
 import { MuseComponent, MuseImage, MuseManual } from "museschool"
 import { useMuseschoolStore } from "@/store/modules/museschool"
 import { getManual, getUploadedImages, setManual, setUploadedImages } from "@/utils/cache/localStorage"
 import { ElMessage } from "element-plus"
-import { Edit, MagicStick, Operation, Picture, Plus } from "@element-plus/icons-vue"
+import { Close, Edit, MagicStick, Operation, Picture, Plus } from "@element-plus/icons-vue"
 import SvgIcon from "@/components/SvgIcon/index.vue"
 import museschool_logo from "@/assets/museschool/museschool_logo.png"
 import { uploadFile } from "@/api/adminMuseum"
@@ -17,22 +17,24 @@ const museschoolStore = useMuseschoolStore()
 
 /* 研学手册信息相关 ********************************************************************************************/
 //添加组件应修改
-//1.generalComponent
+//1.GeneralComponent
 //2.prototypeComponentList原型组件列表
 //3.该组件的右侧编辑区域（html&表单绑定）
 //4.选择组件变化监听中的switch(每个选项)
 //5.监听表单变化
 //6.添加组件函数中的switch
 const thisManual: MuseManual = museschoolStore.manual //本页面的研学手册
-const titleEditorVisible = ref(false) //标题表单是否可见
+const titleEditorVisible: Ref<boolean> = ref(false) //标题表单是否可见
 
-const designZoneRef = ref(null) //设计区域组件引用
+const designZoneRef = ref<HTMLInputElement | null>(null) //设计区域组件引用
 
 //gridlayout列数，行高
-const colNum = ref(50)
-const rowHeight = ref(10)
+const colNum: Ref<number> = ref(50)
+const rowHeight: Ref<number> = ref(10)
 
-const pageHeight = ref(";height:800px") //页面高度
+const pageHeight: Ref<string> = ref(";height:800px") //页面高度
+const pageEditBtnVisible: Ref<boolean> = ref(false) //页面编辑按钮是否可见
+const pageEditDialogVisible: Ref<boolean> = ref(false) //页面编辑对话框是否可见
 
 //监听manual变化，同步修改到museschoolStore
 watch(thisManual, (newThisManual) => {
@@ -52,6 +54,7 @@ function manualUploadHandler() {
 
 //清空手册
 function manualClearHandler() {
+  thisManual.nextComponentId = 1
   thisManual.pages.splice(0)
   thisManual.pages.push({
     page: 0,
@@ -61,6 +64,34 @@ function manualClearHandler() {
     componentList: []
   })
   setManual(thisManual)
+}
+
+//添加页
+function addPageHandler(pageIndex: number) {
+  thisManual.pages.splice(pageIndex + 1, 0, {
+    page: pageIndex + 1,
+    pageInfo: {
+      background: "background:white"
+    },
+    componentList: []
+  })
+  ElMessage.info("添加成功")
+}
+
+//编辑页
+function editPageHandler(pageIndex: number) {
+  console.log("edit" + pageIndex)
+  pageEditDialogVisible.value = true
+}
+
+//修改页
+function deletePageHandler(pageIndex: number) {
+  console.log("delete" + pageIndex)
+  if (thisManual.pages.length == 1 && pageIndex <= 0) {
+    ElMessage.error("至少保留一页")
+  } else {
+    thisManual.pages.splice(pageIndex, 1)
+  }
 }
 
 /* 组件选择相关 ********************************************************************************************/
@@ -156,17 +187,17 @@ function chooseComponentById(id: string) {
 }
 
 /* 原型组件区（左侧区域）Tab相关 ********************************************************************************************/
-const chosenComponentsTab = ref(0)
+const chosenComponentsTab: Ref<number> = ref(0)
 const componentsTabColor = "color: #6f6f6f;background:#313338"
 const activeComponentsTabColor = "color: #ffffff"
 
 //tab-btn组件引用
-const componentsTabBtn0Ref = ref(null)
-const componentsTabBtn1Ref = ref(null)
-const componentsTabBtn2Ref = ref(null)
-const componentsTabBtn3Ref = ref(null)
-const componentsTabBtn4Ref = ref(null)
-const componentsTabBrBtnRef = ref(null)
+const componentsTabBtn0Ref = ref<HTMLInputElement | null>(null)
+const componentsTabBtn1Ref = ref<HTMLInputElement | null>(null)
+const componentsTabBtn2Ref = ref<HTMLInputElement | null>(null)
+const componentsTabBtn3Ref = ref<HTMLInputElement | null>(null)
+const componentsTabBtn4Ref = ref<HTMLInputElement | null>(null)
+const componentsTabBrBtnRef = ref<HTMLInputElement | null>(null)
 
 /* 组件增删相关 ********************************************************************************************/
 //原型组件列表
@@ -304,7 +335,7 @@ function addImageHandler(index: number) {
 
 //删除组件
 function deleteComponentHandler(pageIndex: number, componentIndex: number) {
-  if (pageIndex > 0 && componentIndex > 0) {
+  if (pageIndex >= 0 && componentIndex >= 0) {
     if (chosenComponent.pageIndex == pageIndex && chosenComponent.componentIndex == componentIndex) {
       chooseComponentHandler(-1, -1)
     }
@@ -316,17 +347,17 @@ function deleteComponentHandler(pageIndex: number, componentIndex: number) {
 
 /* 文件上传相关 ********************************************************************************************/
 //文件类型Tab相关
-const chosenFileTab = ref(0)
+const chosenFileTab: Ref<number> = ref(0)
 const fileTabColor = "border-bottom: 2px solid #4A505E"
 const activeFileTabColor = "border-bottom: 2px solid #6896FC"
 
 const uploadedImages: MuseImage[] = reactive([]) //已上传的图片
-const uploadDialogVisible = ref(false)
-const fileUrl = ref("")
+const uploadDialogVisible: Ref<boolean> = ref(false)
+const fileUrl: Ref<string> = ref("")
 const imageList = ref<any[]>([])
 const fileList = ref<any[]>([])
-const previewPicDialogVisible = ref(false)
-const previewImage = ref("")
+const previewPicDialogVisible: Ref<boolean> = ref(false)
+const previewImage: Ref<string> = ref("")
 
 //文件修改处理
 function fileChangeHandler(_file: any, _fileList: any) {
@@ -416,7 +447,7 @@ const handleUpload = () => {
 }
 
 /* 组件参数修改区（右侧区域）Tab相关 ********************************************************************************************/
-const chosenEditorTab = ref(0)
+const chosenEditorTab: Ref<number> = ref(0)
 const editorTabColor = "color: #6f6f6f;border-bottom: 2px solid #e4e4e4"
 const activeEditorTabColor = "color: #326EF2;border-bottom: 2px solid #326EF2"
 
@@ -467,11 +498,11 @@ function componentsTabChangeHandler(i: number) {
 /* 组件参数修改相关 ********************************************************************************************/
 //填充与线条
 //文本颜色
-const fontColor = ref("#000000")
-const fontColorEditorVisible = ref(false)
+const fontColor: Ref<string> = ref("#000000")
+const fontColorEditorVisible: Ref<boolean> = ref(false)
 //背景颜色
-const backgroundColor = ref("#FFFFFF")
-const backgroundColorEditorVisible = ref(false)
+const backgroundColor: Ref<string> = ref("#FFFFFF")
+const backgroundColorEditorVisible: Ref<boolean> = ref(false)
 //监听变化
 watch(fontColor, (newFontColor) => {
   thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].componentProps!.color =
@@ -485,14 +516,14 @@ watch(backgroundColor, (newBackgroundColor) => {
 
 //大小与属性
 //位置大小
-const x = ref(1)
-const y = ref(1)
-const w = ref(10)
-const h = ref(10)
-const minW = ref(1)
-const maxW = ref(20)
-const minH = ref(1)
-const maxH = ref(20)
+const x: Ref<number> = ref(1)
+const y: Ref<number> = ref(1)
+const w: Ref<number> = ref(10)
+const h: Ref<number> = ref(10)
+const minW: Ref<number> = ref(1)
+const maxW: Ref<number> = ref(20)
+const minH: Ref<number> = ref(1)
+const maxH: Ref<number> = ref(20)
 //监听变化
 watch(x, (newX) => {
   thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].x = newX
@@ -543,26 +574,23 @@ function componentResizedHandler(i: string, newW: number, newH: number) {
 }
 
 //文本内容
-const textContent = ref("")
-const textContentEditorVisible = ref(false)
+const textContent: Ref<string> = ref("")
+const textContentEditorVisible: Ref<boolean> = ref(false)
 //字号
-const fontSize = ref(16)
-const fontSizeEditorVisible = ref(false)
+const fontSize: Ref<number> = ref(16)
+const fontSizeEditorVisible: Ref<boolean> = ref(false)
 //字重
-const fontWeight = ref("")
+const fontWeight: Ref<string> = ref("")
 const fontWeightOptions = reactive([
   { value: "bold", label: "Bold" },
   { value: "bolder", label: "Bolder" },
   { value: "lighter", label: "Lighter" },
-  {
-    value: "normal",
-    label: "normal"
-  }
+  { value: "normal", label: "normal" }
 ])
-const fontWeightEditorVisible = ref(false)
+const fontWeightEditorVisible: Ref<boolean> = ref(false)
 //Url内容
-const UrlProps = ref("")
-const UrlEditorVisible = ref(false)
+const UrlProps: Ref<string> = ref("")
+const UrlEditorVisible: Ref<boolean> = ref(false)
 //监听变化
 watch(textContent, (newTextContent) => {
   thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].componentProps!.content =
@@ -619,9 +647,6 @@ onUnmounted(() => {
 function resizeHandler() {
   const pageWidth = (designZoneRef.value as unknown as HTMLElement).getBoundingClientRect().width * 0.96
   pageHeight.value = ";height:" + (pageWidth * Math.sqrt(2)).toString() + "px"
-  console.log((designZoneRef.value as unknown as HTMLElement).getBoundingClientRect().height)
-  console.log(pageHeight.value)
-  console.log(pageWidth)
   rowHeight.value = pageWidth / colNum.value
 }
 
@@ -828,7 +853,26 @@ function beforeunloadHandler() {
           :key="pageIndex"
           :style="page.pageInfo.background + pageHeight"
           class="muse-page"
+          @mouseenter="pageEditBtnVisible = true"
+          @mouseleave="pageEditBtnVisible = false"
         >
+          <div
+            v-if="pageEditBtnVisible"
+            class="page-edit-btn-container"
+            style="cursor: pointer"
+            @click="editPageHandler(pageIndex)"
+          >
+            <el-icon class="page-edit-btn" @click="addPageHandler(pageIndex)">
+              <Plus />
+            </el-icon>
+            <el-icon class="page-edit-btn" @click="editPageHandler(pageIndex)">
+              <Edit />
+            </el-icon>
+            <el-icon class="page-edit-btn" @click="deletePageHandler(pageIndex)">
+              <Close />
+            </el-icon>
+          </div>
+          <el-dialog v-model="pageEditDialogVisible" title="上传文件"> s</el-dialog>
           <grid-layout
             v-model:layout="page.componentList"
             :col-num="colNum"
@@ -1211,6 +1255,21 @@ function beforeunloadHandler() {
         width: 96%;
         border-radius: 5px;
         margin-top: 2%;
+
+        .page-edit-btn-container {
+          position: absolute;
+          top: 4px;
+          right: 4px;
+          width: 8%;
+          height: 2%;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-around;
+          color: rgb(200, 200, 200);
+          cursor: pointer;
+          z-index: 10;
+        }
 
         .vue-grid-layout {
           width: 100%;

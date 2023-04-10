@@ -1,14 +1,14 @@
 <script lang="ts" setup>
-import { onMounted, ref, watch } from "vue"
+import { onMounted, Ref, ref, watch } from "vue"
 
 /* 传入参数相关 ********************************************************************************************/
 //图片组件参数格式
 // componentProps: { url: "", background: ""}
 const props = defineProps(["componentProps"])
-const componentStyle = ref("") //组件样式
+const componentStyle: Ref<string> = ref("") //组件样式
 
 //监听props变化
-watch(props, async () => {
+watch(props, () => {
   componentStyle.value = ""
   //解析componentProps
   if (props.componentProps.background != null) {

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, ref } from "vue"
+import { onMounted, Ref, ref } from "vue"
 import { VideoPause, VideoPlay } from "@element-plus/icons-vue"
 import { ElMessage } from "element-plus"
 import canon from "@/assets/museschool/canon.mp3"
@@ -8,7 +8,7 @@ import canon from "@/assets/museschool/canon.mp3"
 //音频组件参数格式
 // componentProps: { url: "", background: ""}
 const props = defineProps(["componentProps"])
-const componentStyle = ref("") //组件样式
+const componentStyle: Ref<string> = ref("") //组件样式
 
 /* 生命周期钩子 ********************************************************************************************/
 onMounted(async () => {
@@ -24,7 +24,7 @@ onMounted(async () => {
 
 /* 音频控制相关 ********************************************************************************************/
 let ifGetAudio = false //是否获取到音频
-const ifPlaying = ref(false) //是否正在播放
+const ifPlaying: Ref<boolean> = ref(false) //是否正在播放
 const audio = new Audio() //音频对象
 
 //播放/暂停音乐
