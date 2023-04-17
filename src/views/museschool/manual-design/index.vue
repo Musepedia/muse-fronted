@@ -80,13 +80,11 @@ function addPageHandler(pageIndex: number) {
 
 //编辑页
 function editPageHandler(pageIndex: number) {
-  console.log("edit" + pageIndex)
   pageEditDialogVisible.value = true
 }
 
 //修改页
 function deletePageHandler(pageIndex: number) {
-  console.log("delete" + pageIndex)
   if (thisManual.pages.length == 1 && pageIndex <= 0) {
     ElMessage.error("至少保留一页")
   } else {
@@ -529,13 +527,27 @@ watch(x, (newX) => {
   thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].x = newX
 })
 watch(y, (newY) => {
+  const tempY = thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].y
   thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].y = newY
+  if (!checkComponentPos(chosenComponent.pageIndex, chosenComponent.componentIndex)) {
+    thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].y = tempY
+    setTimeout(() => {
+      y.value = thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].y
+    }, 0)
+  }
 })
 watch(w, (newW) => {
   thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].w = newW
 })
 watch(h, (newH) => {
+  const tempH = thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].h
   thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].h = newH
+  if (!checkComponentPos(chosenComponent.pageIndex, chosenComponent.componentIndex)) {
+    thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].h = tempH
+    setTimeout(() => {
+      h.value = thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].h
+    }, 0)
+  }
 })
 watch(minW, (newMinW) => {
   thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].minW = newMinW
@@ -550,27 +562,45 @@ watch(maxH, (newMaxH) => {
   thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].maxH = newMaxH
 })
 
+//检查组件位置范围是否合法
+function checkComponentPos(pageIndex: number, componentIndex: number): boolean {
+  const pageRect = (designZoneRef.value as unknown as HTMLElement).children[pageIndex].getBoundingClientRect()
+  const component = thisManual.pages[pageIndex].componentList[componentIndex]
+  return pageRect.top + (component.y + component.h) * rowHeight.value < pageRect.bottom
+}
+
 //更改组件位置时同步修改表单值
 function componentMovedHandler(i: string, newX: number, newY: number) {
+  const tempX = x.value
+  const tempY = y.value
+  x.value = newX
+  y.value = newY
   chooseComponentById(i)
-  const pageIndex = getTargetPage().pageIndex
-  if (pageIndex != undefined) {
-    if (pageIndex == chosenComponent.pageIndex) {
-      x.value = newX
-      y.value = newY
-    } else {
-      //在本页内删除，在目标页添加
-    }
-  } else {
-    //目的地非法，跳回
+  if (!checkComponentPos(chosenComponent.pageIndex, chosenComponent.componentIndex)) {
+    x.value = tempX
+    y.value = tempY
+    setTimeout(() => {
+      thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].x = x.value
+      thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].y = y.value
+    }, 1)
   }
 }
 
 //更改组件大小时同步修改表单值
 function componentResizedHandler(i: string, newW: number, newH: number) {
-  chooseComponentById(i)
+  const tempW = w.value
+  const tempH = h.value
   w.value = newW
   h.value = newH
+  chooseComponentById(i)
+  if (!checkComponentPos(chosenComponent.pageIndex, chosenComponent.componentIndex)) {
+    w.value = tempW
+    h.value = tempH
+    setTimeout(() => {
+      thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].w = w.value
+      thisManual.pages[chosenComponent.pageIndex].componentList[chosenComponent.componentIndex].h = h.value
+    }, 1)
+  }
 }
 
 //文本内容
@@ -856,12 +886,7 @@ function beforeunloadHandler() {
           @mouseenter="pageEditBtnVisible = true"
           @mouseleave="pageEditBtnVisible = false"
         >
-          <div
-            v-if="pageEditBtnVisible"
-            class="page-edit-btn-container"
-            style="cursor: pointer"
-            @click="editPageHandler(pageIndex)"
-          >
+          <div v-if="pageEditBtnVisible" class="page-edit-btn-container" style="cursor: pointer">
             <el-icon class="page-edit-btn" @click="addPageHandler(pageIndex)">
               <Plus />
             </el-icon>
@@ -1254,7 +1279,7 @@ function beforeunloadHandler() {
         left: 2%;
         width: 96%;
         border-radius: 5px;
-        margin-top: 2%;
+        margin-top: 15px;
 
         .page-edit-btn-container {
           position: absolute;
