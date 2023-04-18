@@ -35,6 +35,7 @@ const rowHeight: Ref<number> = ref(10)
 const pageHeight: Ref<string> = ref(";height:800px") //页面高度
 const pageEditBtnVisible: Ref<boolean> = ref(false) //页面编辑按钮是否可见
 const pageEditDialogVisible: Ref<boolean> = ref(false) //页面编辑对话框是否可见
+const pageBackground: Ref<string> = ref("#ffffff") //页面背景
 
 //监听manual变化，同步修改到museschoolStore
 watch(thisManual, (newThisManual) => {
@@ -59,7 +60,7 @@ function manualClearHandler() {
   thisManual.pages.push({
     page: 0,
     pageInfo: {
-      background: "background:white"
+      background: "background:#ffffff"
     },
     componentList: []
   })
@@ -71,7 +72,7 @@ function addPageHandler(pageIndex: number) {
   thisManual.pages.splice(pageIndex + 1, 0, {
     page: pageIndex + 1,
     pageInfo: {
-      background: "background:white"
+      background: "background:#ffffff"
     },
     componentList: []
   })
@@ -80,7 +81,10 @@ function addPageHandler(pageIndex: number) {
 
 //编辑页
 function editPageHandler(pageIndex: number) {
+  console.log(pageIndex)
   pageEditDialogVisible.value = true
+  pageBackground.value = thisManual.pages[pageIndex].pageInfo.background.slice(11)
+  console.log(pageBackground.value)
 }
 
 //修改页
@@ -90,6 +94,25 @@ function deletePageHandler(pageIndex: number) {
   } else {
     thisManual.pages.splice(pageIndex, 1)
   }
+}
+
+//处理页面比例更改
+function ratioChangeHandler() {
+  const oldPH: number = Math.floor(parseInt(pageHeight.value.slice(8, -3)) / rowHeight.value)
+  resizeHandler()
+  //调整各个组件的位置，使之合法
+  for (const page of thisManual.pages) {
+    for (const component of page.componentList) {
+      const newPH: number = Math.floor(parseInt(pageHeight.value.slice(8, -3)) / rowHeight.value)
+      component.y = Math.floor((component.y / oldPH) * newPH)
+    }
+  }
+}
+
+//处理页面背景更改
+function changePageBackgroundHandler(pageIndex: number) {
+  console.log(pageBackground.value)
+  thisManual.pages[pageIndex].pageInfo.background = "background:" + pageBackground.value
 }
 
 /* 组件选择相关 ********************************************************************************************/
@@ -676,7 +699,11 @@ onUnmounted(() => {
 //监听页面窗口大小变化，重新计算行高、页高
 function resizeHandler() {
   const pageWidth = (designZoneRef.value as unknown as HTMLElement).getBoundingClientRect().width * 0.96
-  pageHeight.value = ";height:" + (pageWidth * Math.sqrt(2)).toString() + "px"
+  if (thisManual.ratio) {
+    pageHeight.value = ";height:" + (pageWidth * Math.sqrt(2)).toString() + "px"
+  } else {
+    pageHeight.value = ";height:" + (pageWidth * (1 / Math.sqrt(2))).toString() + "px"
+  }
   rowHeight.value = pageWidth / colNum.value
 }
 
@@ -709,10 +736,16 @@ function beforeunloadHandler() {
         <span>Museschool</span>
       </div>
       <div class="title" @click="titleEditorVisible = true">{{ thisManual.title }}</div>
-      <div v-if="titleEditorVisible" class="titleForm">
-        <el-input v-model="thisManual.title" :placeholder="thisManual.title" style="width: 70%" />
-        <el-button color="#2565F1" @click="titleEditorVisible = false">修改</el-button>
-      </div>
+      <el-dialog v-model="titleEditorVisible" class="titleForm" title="修改研学手册标题">
+        <el-form>
+          <el-form-item label="研学手册标题：">
+            <el-input v-model="thisManual.title" :placeholder="thisManual.title" style="width: 70%" />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button type="primary" @click="titleEditorVisible = false">修改</el-button>
+        </template>
+      </el-dialog>
       <div class="header-btn">
         <el-button color="#2565F1" icon="Monitor" @click="navigateToManualPreview(false)">预览</el-button>
         <el-button color="#FFFFFF" icon="Download" @click="navigateToManualPreview(true)">导出</el-button>
@@ -897,7 +930,22 @@ function beforeunloadHandler() {
               <Close />
             </el-icon>
           </div>
-          <el-dialog v-model="pageEditDialogVisible" title="上传文件"> s</el-dialog>
+          <el-dialog v-model="pageEditDialogVisible" title="页面样式修改">
+            <el-form>
+              <el-form-item label="页面比例：">
+                <el-radio-group v-model="thisManual.ratio" @change="ratioChangeHandler">
+                  <el-radio :label="true" border>竖版</el-radio>
+                  <el-radio :label="false" border>横版</el-radio>
+                </el-radio-group>
+              </el-form-item>
+              <el-form-item label="背景颜色：">
+                <el-color-picker v-model="pageBackground" show-alpha @change="changePageBackgroundHandler(pageIndex)" />
+              </el-form-item>
+            </el-form>
+            <template #footer>
+              <el-button type="primary" @click="pageEditDialogVisible = false">确认</el-button>
+            </template>
+          </el-dialog>
           <grid-layout
             v-model:layout="page.componentList"
             :col-num="colNum"

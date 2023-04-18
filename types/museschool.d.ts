@@ -4,6 +4,7 @@ declare module "museschool" {
     id: number
     title: string
     nextComponentId: number
+    ratio: boolean//页面比例，ture为竖版，false为横版
     pages: MusePage[]
   }
 

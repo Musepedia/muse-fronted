@@ -8,7 +8,8 @@ export const useMuseschoolStore = defineStore("Museschool", () => {
     id: -1,
     title: "-1",
     nextComponentId: 1,
-    pages: [{ page: 0, pageInfo: { nextId: 1, background: "background:white" }, componentList: [] }]
+    ratio: true,
+    pages: [{ page: 0, pageInfo: { background: "background:#ffffff" }, componentList: [] }]
   })
   const exportManual = ref()
   return { manual, exportManual }
