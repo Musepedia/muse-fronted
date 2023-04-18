@@ -4,7 +4,7 @@ import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "elem
 import { reactive, ref, watch } from "vue"
 import { useRouter } from "vue-router"
 import { getMuseumListApi, uploadFile } from "@/api/adminMuseum"
-import { getZoneListApi, addZoneApi, updateZoneApi, changeZoneEnableApi } from "@/api/MuseumZone"
+import { addZoneApi, changeZoneEnableApi, getZoneListApi, updateZoneApi } from "@/api/MuseumZone"
 import { Plus } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 // import { PageFooter } from "@/layout/components"
@@ -409,13 +409,13 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getZone
   <div class="app-container">
     <el-dialog
       v-model="choseMuseumDialogVisible"
-      title="请选择一个博物馆"
-      width="30%"
-      style="display: block"
       :before-close="handleChoseMuseumClose"
       loading="loading"
+      style="display: block"
+      title="请选择一个博物馆"
+      width="30%"
     >
-      <el-select style="margin: auto" v-model="museumChosen" placeholder="请选择博物馆">
+      <el-select v-model="museumChosen" placeholder="请选择博物馆" style="margin: auto">
         <el-option v-for="item in museumList" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
       <template #footer>
@@ -427,19 +427,19 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getZone
     <el-row class="search-wrapper">
       <el-button
         v-if="userStore.roles[0] === 'sys_admin'"
-        type="info"
         plain
         style="margin-right: 5px"
+        type="info"
         @click="handleChoseMuseumAgain"
-        >选择博物馆</el-button
-      >
-      <el-button type="info" plain style="margin-right: 8%" @click="handleEditZonePosition">编辑展区位置</el-button>
+        >选择博物馆
+      </el-button>
+      <el-button plain style="margin-right: 8%" type="info" @click="handleEditZonePosition">编辑展区位置</el-button>
     </el-row>
 
     <el-row>
       <!-- <el-empty v-if="zoneList.length === 0" class="logo" description="暂无展区数据" style="margin: auto" /> -->
-      <el-col v-for="(item, index) in zoneList" :key="item.id" :span="6" :offset="index % 3 === 0 ? 2 : 1">
-        <el-card style="margin-bottom: 10px" :body-style="{ padding: '0px' }" shadow="hover">
+      <el-col v-for="(item, index) in zoneList" :key="item.id" :offset="index % 3 === 0 ? 2 : 1" :span="6">
+        <el-card :body-style="{ padding: '0px' }" shadow="hover" style="margin-bottom: 10px">
           <div class="image-block">
             <el-image v-if="item.imageUrl !== ''" :src="item.imageUrl" class="image" fit="contain" />
             <el-image
@@ -453,8 +453,8 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getZone
           <div style="padding: 14px">
             <span>{{ item.name }}</span>
             <span style="margin-left: 15px">
-              <el-tag v-if="item.enabled" type="success" effect="plain">启用中</el-tag>
-              <el-tag v-else type="danger" effect="plain">已关闭</el-tag>
+              <el-tag v-if="item.enabled" effect="plain" type="success">启用中</el-tag>
+              <el-tag v-else effect="plain" type="danger">已关闭</el-tag>
             </span>
             <div class="bottom" style="margin-top: 15px">
               <el-button class="button" @click="handleDetails(item)">查看</el-button>
@@ -464,22 +464,22 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getZone
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6" :offset="zoneList.length % 3 === 0 ? 2 : 1">
-        <el-card class="add-icon-container" :body-style="{ padding: '0px' }" shadow="never">
+      <el-col :offset="zoneList.length % 3 === 0 ? 2 : 1" :span="6">
+        <el-card :body-style="{ padding: '0px' }" class="add-icon-container" shadow="never">
           <!-- <el-icon @click="handleOpenAddZone"><Plus /></el-icon> -->
-          <el-button text :icon="Plus" @click="handleOpenAddZone" />
+          <el-button :icon="Plus" text @click="handleOpenAddZone" />
         </el-card>
       </el-col>
     </el-row>
     <!-- 分页 -->
     <div class="pager-wrapper">
       <el-pagination
-        background
+        :currentPage="paginationData.currentPage"
         :layout="paginationData.layout"
+        :page-size="paginationData.pageSize"
         :page-sizes="paginationData.pageSizes"
         :total="paginationData.total"
-        :page-size="paginationData.pageSize"
-        :currentPage="paginationData.currentPage"
+        background
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
       />
@@ -488,40 +488,42 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getZone
     <!-- <PageFooter /> -->
 
     <!-- 图片预览 组件 -->
-    <el-dialog v-model="previewPicDialog" @close="previewPicDialog = false" style="display: block" width="50%">
+    <el-dialog v-model="previewPicDialog" style="display: block" width="50%" @close="previewPicDialog = false">
       <el-image :src="previewImage" style="margin: auto" />
     </el-dialog>
     <!-- 新增/修改 组件 -->
     <el-dialog
       v-model="dialogVisible"
       :title="currentUpdateId === undefined ? '新增展区' : '修改展区信息'"
-      @close="resetForm"
       width="50%"
+      @close="resetForm"
     >
-      <el-form ref="zoneFormRef" :model="zoneForm" :rules="zoneFormRules" label-width="100px" label-position="left">
-        <el-form-item prop="name" label="展区名称">
+      <el-form ref="zoneFormRef" :model="zoneForm" :rules="zoneFormRules" label-position="left" label-width="100px">
+        <el-form-item label="展区名称" prop="name">
           <el-input v-model="zoneForm.name" placeholder="请输入展区名称" />
         </el-form-item>
-        <el-form-item prop="description" label="展区描述">
-          <el-input type="textarea" v-model="zoneForm.description" placeholder="请输入展区描述" />
+        <el-form-item label="展区描述" prop="description">
+          <el-input v-model="zoneForm.description" placeholder="请输入展区描述" type="textarea" />
         </el-form-item>
-        <el-form-item prop="imageList" label="上传展区图片">
+        <el-form-item label="上传展区图片" prop="imageList">
           <el-upload
-            class="uploader"
-            action="#"
             ref="upload"
-            :limit="5"
-            :file-list="fileList"
-            list-type="picture-card"
-            accept=".jpg,.png,.jpeg,.JPG,.JPEG"
             :auto-upload="false"
             :before-upload="beforeUpload"
+            :file-list="fileList"
+            :limit="5"
+            :on-change="handlePictureChange"
             :on-exceed="handlePictureExceed"
             :on-preview="handlePictureCardPreview"
-            :on-change="handlePictureChange"
             :on-remove="handlePictureRemove"
+            accept=".jpg,.png,.jpeg,.JPG,.JPEG"
+            action="#"
+            class="uploader"
+            list-type="picture-card"
           >
-            <el-icon><Plus /></el-icon>
+            <el-icon>
+              <Plus />
+            </el-icon>
           </el-upload>
         </el-form-item>
       </el-form>
@@ -537,12 +539,12 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getZone
           <el-carousel-item v-if="imageListDetail.length === 0">
             <el-empty :image-size="35" description="暂未上传" />
           </el-carousel-item>
-          <el-carousel-item v-else v-for="item in imageListDetail" :key="item">
+          <el-carousel-item v-for="item in imageListDetail" v-else :key="item">
             <el-image
               v-if="imageListDetail.length !== 0 && imageListDetail[0] !== ''"
               :src="item"
-              fit="contain"
               class="justify-center"
+              fit="contain"
               style="width: 100%; height: 100%"
             />
             <el-empty v-else :image-size="35" description="暂未上传" />
@@ -551,7 +553,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getZone
           <el-empty v-else :image-size="35" description="暂未上传" /> -->
         </el-carousel>
       </div>
-      <el-descriptions style="margin-top: 20px" :column="1" border>
+      <el-descriptions :column="1" border style="margin-top: 20px">
         <el-descriptions-item label="展区描述: ">{{ descriptionDetail }}</el-descriptions-item>
         <el-descriptions-item label="状态: ">{{ enabledDetail === true ? "启用中" : "已关闭" }}</el-descriptions-item>
       </el-descriptions>
@@ -565,6 +567,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getZone
   margin-bottom: 20px;
   align-items: center;
   justify-content: flex-end;
+
   :deep(.el-button.is-plain) {
     --el-button-text-color: #292929;
     --el-button-border-color: #1f1f1f;
@@ -582,6 +585,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getZone
   height: 330px;
   display: flex;
   justify-content: center;
+
   :deep(.el-card__body) {
     display: flex;
     justify-content: center;

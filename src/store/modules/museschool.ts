@@ -1,13 +1,18 @@
 import store from "@/store"
 import { defineStore } from "pinia"
-import { Component } from "museschool"
+import { MuseManual } from "museschool"
 import { reactive, ref } from "vue"
 
 export const useMuseschoolStore = defineStore("Museschool", () => {
-  const componentList: Component[] = reactive([])
-  const manualTitle = ref()
+  const manual: MuseManual = reactive({
+    id: -1,
+    title: "-1",
+    nextComponentId: 1,
+    ratio: true,
+    pages: [{ page: 0, pageInfo: { background: "background:#ffffff" }, componentList: [] }]
+  })
   const exportManual = ref()
-  return { componentList, manualTitle, exportManual }
+  return { manual, exportManual }
 })
 
 /** 在 setup 外使用 */

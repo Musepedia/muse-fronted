@@ -57,7 +57,7 @@ function createRequestFunction(service: AxiosInstance) {
       //   "Content-Type": get(config, "headers.Content-Type", "application/json")
       // },
       timeout: 5000,
-      baseURL: "https://b52d-180-160-69-134.ap.ngrok.io/",
+      baseURL: "https://b0f3-180-160-69-134.jp.ngrok.io/",
       data: {}
     }
     return service(Object.assign(configDefault, config))

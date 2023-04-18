@@ -4,17 +4,17 @@ import { useUserStoreHook } from "@/store/modules/user"
 import { getZoneListApi } from "@/api/MuseumZone"
 import { useRouter } from "vue-router"
 import {
-  getExhibitListApi,
   addExhibitApi,
-  updateExhibitApi,
+  changeExhibitEnableApi,
   getExhibitAliasApi,
-  updateExhibitAliasApi,
+  getExhibitListApi,
   getExhibitTextApi,
-  updateExhibitTextApi,
-  changeExhibitEnableApi
+  updateExhibitAliasApi,
+  updateExhibitApi,
+  updateExhibitTextApi
 } from "@/api/MuseumExhibit"
 import { getMuseumListApi, uploadFile } from "@/api/adminMuseum"
-import { ElMessage, type FormInstance, type FormRules, ElMessageBox, ElInput } from "element-plus"
+import { ElInput, ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus"
 import { Plus } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 // import { PageFooter } from "@/layout/components"
@@ -578,13 +578,13 @@ watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSi
   <div class="app-container">
     <el-dialog
       v-model="choseMuseumDialogVisible"
-      title="请选择一个博物馆"
-      width="30%"
-      style="display: block"
       :before-close="handleChoseMuseumClose"
       loading="loading"
+      style="display: block"
+      title="请选择一个博物馆"
+      width="30%"
     >
-      <el-select style="margin: auto" v-model="museumChosen" placeholder="请选择博物馆">
+      <el-select v-model="museumChosen" placeholder="请选择博物馆" style="margin: auto">
         <el-option v-for="item in museumList" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
       <template #footer>
@@ -596,19 +596,19 @@ watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSi
     <el-row class="search-wrapper">
       <el-button
         v-if="userStore.roles[0] === 'sys_admin'"
-        type="info"
         plain
         style="margin-right: 5px"
+        type="info"
         @click="handleChoseMuseumAgain"
-        >选择博物馆</el-button
-      >
-      <el-button type="info" plain style="margin-right: 8%" @click="handleEditExhibitPosition">编辑展品位置</el-button>
+        >选择博物馆
+      </el-button>
+      <el-button plain style="margin-right: 8%" type="info" @click="handleEditExhibitPosition">编辑展品位置</el-button>
     </el-row>
     <el-row style="margin-bottom: 20px">
       <span style="float: left; margin-left: 8%">展区筛选</span>
     </el-row>
     <el-row style="margin-bottom: 20px">
-      <el-select style="width: 84%; margin: auto" v-model="zoneChosen" placeholder="请选择展区">
+      <el-select v-model="zoneChosen" placeholder="请选择展区" style="width: 84%; margin: auto">
         <el-option v-for="item in zoneList" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
     </el-row>
@@ -616,8 +616,8 @@ watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSi
     <!-- 展品陈列 -->
     <el-row>
       <!-- <el-empty v-if="zoneList.length === 0" class="logo" description="暂无展区数据" style="margin: auto" /> -->
-      <el-col v-for="(item, index) in exhibitList" :key="item.id" :span="6" :offset="index % 3 === 0 ? 2 : 1">
-        <el-card style="margin-bottom: 10px" :body-style="{ padding: '0px' }" shadow="hover">
+      <el-col v-for="(item, index) in exhibitList" :key="item.id" :offset="index % 3 === 0 ? 2 : 1" :span="6">
+        <el-card :body-style="{ padding: '0px' }" shadow="hover" style="margin-bottom: 10px">
           <div class="image-block">
             <el-image v-if="item.figureUrl !== ''" :src="item.figureUrl" class="image" fit="contain" />
             <el-image
@@ -631,8 +631,8 @@ watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSi
           <div style="padding: 14px">
             <span>{{ item.label }}</span>
             <span style="margin-left: 15px">
-              <el-tag v-if="item.enabled" type="success" effect="plain">展览中</el-tag>
-              <el-tag v-else type="danger" effect="plain">未陈列</el-tag>
+              <el-tag v-if="item.enabled" effect="plain" type="success">展览中</el-tag>
+              <el-tag v-else effect="plain" type="danger">未陈列</el-tag>
             </span>
             <div class="bottom" style="margin-top: 15px">
               <el-button class="button" @click="handleDetails(item)">查看</el-button>
@@ -642,67 +642,69 @@ watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSi
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6" :offset="exhibitList.length % 3 === 0 ? 2 : 1">
-        <el-card class="add-icon-container" :body-style="{ padding: '0px' }" shadow="never">
+      <el-col :offset="exhibitList.length % 3 === 0 ? 2 : 1" :span="6">
+        <el-card :body-style="{ padding: '0px' }" class="add-icon-container" shadow="never">
           <!-- <el-icon @click="handleOpenAddZone"><Plus /></el-icon> -->
-          <el-button text :icon="Plus" @click="handleOpenAddExhibit" />
+          <el-button :icon="Plus" text @click="handleOpenAddExhibit" />
         </el-card>
       </el-col>
     </el-row>
     <div class="pager-wrapper">
       <el-pagination
-        background
+        :currentPage="paginationData.currentPage"
         :layout="paginationData.layout"
+        :page-size="paginationData.pageSize"
         :page-sizes="paginationData.pageSizes"
         :total="paginationData.total"
-        :page-size="paginationData.pageSize"
-        :currentPage="paginationData.currentPage"
+        background
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
       />
     </div>
 
     <!-- 图片预览 组件 -->
-    <el-dialog v-model="previewPicDialog" @close="previewPicDialog = false" style="display: block" width="50%">
+    <el-dialog v-model="previewPicDialog" style="display: block" width="50%" @close="previewPicDialog = false">
       <el-image :src="previewImage" style="margin: auto" />
     </el-dialog>
     <!-- 新增/修改 组件 -->
     <el-dialog
       v-model="dialogVisible"
       :title="currentUpdateId === undefined ? '新增展品' : '修改展品信息'"
-      @close="resetForm"
       width="50%"
+      @close="resetForm"
     >
       <el-form
         ref="exhibitFormRef"
         :model="exhibitForm"
         :rules="exhibitFormRules"
-        label-width="100px"
         label-position="left"
+        label-width="100px"
       >
-        <el-form-item prop="label" label="展品名称">
+        <el-form-item label="展品名称" prop="label">
           <el-input v-model="exhibitForm.label" placeholder="请输入展品名称" />
         </el-form-item>
-        <el-form-item prop="description" label="展品描述">
-          <el-input type="textarea" v-model="exhibitForm.description" placeholder="请输入展品描述" />
+        <el-form-item label="展品描述" prop="description">
+          <el-input v-model="exhibitForm.description" placeholder="请输入展品描述" type="textarea" />
         </el-form-item>
-        <el-form-item prop="figureUrlList" label="上传展品图片">
+        <el-form-item label="上传展品图片" prop="figureUrlList">
           <el-upload
-            class="uploader"
-            action="#"
             ref="upload"
-            :limit="5"
-            :file-list="fileList"
-            list-type="picture-card"
-            accept=".jpg,.png,.jpeg,.JPG,.JPEG"
             :auto-upload="false"
             :before-upload="beforeUpload"
+            :file-list="fileList"
+            :limit="5"
+            :on-change="handlePictureChange"
             :on-exceed="handlePictureExceed"
             :on-preview="handlePictureCardPreview"
-            :on-change="handlePictureChange"
             :on-remove="handlePictureRemove"
+            accept=".jpg,.png,.jpeg,.JPG,.JPEG"
+            action="#"
+            class="uploader"
+            list-type="picture-card"
           >
-            <el-icon><Plus /></el-icon>
+            <el-icon>
+              <Plus />
+            </el-icon>
           </el-upload>
         </el-form-item>
       </el-form>
@@ -715,16 +717,16 @@ watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSi
     <!-- 展品详情 组件 -->
     <el-dialog v-model="detailDialogVisible" :title="labelDetail" @close="detailDialogVisible = false">
       <div class="imageCarousel">
-        <el-carousel trigger="click" class="imageCarousel-item">
+        <el-carousel class="imageCarousel-item" trigger="click">
           <el-carousel-item v-if="figureUrlListDetail.length === 0">
             <el-empty :image-size="35" description="暂未上传" />
           </el-carousel-item>
-          <el-carousel-item v-else v-for="item in figureUrlListDetail" :key="item">
+          <el-carousel-item v-for="item in figureUrlListDetail" v-else :key="item">
             <el-image
               v-if="figureUrlListDetail.length !== 0 && figureUrlListDetail[0] !== ''"
               :src="item"
-              fit="contain"
               class="justify-center"
+              fit="contain"
               style="width: 100%; height: 100%"
             />
             <el-empty v-else :image-size="35" description="暂未上传" />
@@ -733,14 +735,14 @@ watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSi
           <el-empty v-else :image-size="35" description="暂未上传" /> -->
         </el-carousel>
       </div>
-      <el-descriptions style="margin-top: 20px" :column="1" border>
+      <el-descriptions :column="1" border style="margin-top: 20px">
         <el-descriptions-item label="别名: ">
           <el-tag
             v-for="alias in aliasDetail"
             :key="alias"
+            :disable-transitions="false"
             class="mx-1"
             closable
-            :disable-transitions="false"
             @close="handleCloseAlias(alias)"
           >
             {{ alias }}
@@ -751,7 +753,7 @@ watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSi
         <el-descriptions-item label="描述: ">{{ descriptionDetail }}</el-descriptions-item>
         <el-descriptions-item label="状态: ">{{ enabledDetail === true ? "展览中" : "未陈列" }}</el-descriptions-item>
         <el-descriptions-item label="文本: ">
-          <el-button type="primary" plain @click="handleOpenEditText">更新展品文本</el-button>
+          <el-button plain type="primary" @click="handleOpenEditText">更新展品文本</el-button>
           <!-- {{ textDetail }} -->
         </el-descriptions-item>
       </el-descriptions>
@@ -760,15 +762,15 @@ watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSi
     <el-dialog
       v-model="exhibitTextDialogVisible"
       :title="labelDetail"
-      @close="exhibitTextDialogVisible = false"
       width="70%"
+      @close="exhibitTextDialogVisible = false"
     >
       <el-tag
         v-for="text in textDetail"
         :key="text"
+        :disable-transition="false"
         class="exhibit-text"
         closable
-        :disable-transition="false"
         @close="handleCloseText(text)"
       >
         {{ text }}
@@ -776,9 +778,9 @@ watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSi
       <el-input
         v-if="textVisible"
         ref="TextRef"
-        type="textarea"
         v-model="textValue"
         size="small"
+        type="textarea"
         @blur="handleInputText"
       />
       <el-button v-else class="button-new-tag ml-1" size="small" @click="showText">+ New Text</el-button>
@@ -793,6 +795,7 @@ watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSi
   margin-bottom: 20px;
   align-items: center;
   justify-content: flex-end;
+
   :deep(.el-button.is-plain) {
     --el-button-text-color: #292929;
     --el-button-border-color: #1f1f1f;
@@ -804,6 +807,7 @@ watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSi
   border-radius: 10px;
   background-color: #fafafa;
 }
+
 .image-block {
   // padding: 30px 0;
   text-align: center;
@@ -815,22 +819,26 @@ watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSi
   justify-content: center;
   vertical-align: middle;
 }
+
 .button {
   margin-left: 0;
   margin-right: 3px;
   padding: 8px 10px;
 }
+
 .add-icon-container {
   margin-bottom: 10px;
   height: 330px;
   display: flex;
   justify-content: center;
+
   :deep(.el-card__body) {
     display: flex;
     justify-content: center;
     align-items: center;
   }
 }
+
 .imageCarousel-item {
   text-align: center;
   // border-right: solid 1px var(--el-border-color);
@@ -844,6 +852,7 @@ watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSi
   //   height: 550px;
   // }
 }
+
 :deep(.el-carousel__container) {
   text-align: center;
   // border-right: solid 1px var(--el-border-color);
@@ -854,11 +863,13 @@ watch([zoneChosen, () => paginationData.currentPage, () => paginationData.pageSi
   justify-content: center;
   vertical-align: middle;
 }
+
 :deep(.exhibit-text) {
   white-space: normal;
   height: auto;
   margin: 0.5rem;
 }
+
 :deep(.button-new-tag) {
   margin: 0.5rem;
 }
