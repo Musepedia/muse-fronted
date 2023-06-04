@@ -5,7 +5,7 @@ import { getZoneListApi } from "@/api/MuseumZone"
 import { useRouter } from "vue-router"
 import { getExhibitListApi } from "@/api/MuseumExhibit"
 import { getMuseumListApi } from "@/api/adminMuseum"
-import { getQuestionListApi, updateQuestionApi } from "@/api/question"
+import { getQuestionListApi, updateQuestionApi, getGPTQuestionListApi } from "@/api/question"
 import { ElInput, ElMessage, type FormInstance, type FormRules } from "element-plus"
 import { usePagination } from "@/hooks/usePagination"
 import { Refresh, Search } from "@element-plus/icons-vue"
@@ -28,8 +28,12 @@ const createData = () => {
   if (userStore.museumID !== null || museumChosen.value !== undefined) {
     loading.value = false
     choseMuseumDialogVisible.value = false
-    getQuestionList()
-    getZoneList()
+    if (isGPT.value === false) {
+      getQuestionList()
+      getZoneList()
+    } else {
+      getGPTQuestionList()
+    }
   } else if (userStore.roles[0] !== "sys_admin") {
     ElMessage.warning("暂未绑定博物馆,请先绑定")
     router.push({ path: "/dashboard" })
@@ -89,6 +93,50 @@ const handleChoseMuseum = async () => {
 /**
  * 查询区域
  */
+const isGPT = ref<boolean>(false)
+const handleCommand = (command: string | number | object) => {
+  if (command === "a") {
+    isGPT.value = false
+    getQuestionList()
+  } else {
+    isGPT.value = true
+    getGPTQuestionList()
+  }
+}
+const searchFormRef2 = ref<FormInstance | null>(null)
+const searchData2 = reactive({
+  createTime: [],
+  updateTime: [],
+  order: "",
+  questionText: "",
+  answerText: ""
+})
+const GPTList = ref<any[]>([])
+const getGPTQuestionList = () => {
+  loading.value = true
+  getGPTQuestionListApi({
+    current: paginationData.currentPage,
+    size: paginationData.pageSize,
+    museumId: (userStore.museumID !== null ? userStore.museumID : museumChosen.value) as number,
+    createTime: searchData2.createTime || undefined,
+    updateTime: searchData2.updateTime || undefined,
+    order: searchData2.order || undefined,
+    questionText: searchData2.questionText || undefined,
+    answerText: searchData2.answerText || undefined
+  })
+    .then((res: any) => {
+      paginationData.total = res.data.data.total
+      GPTList.value = res.data.data.data
+      // console.log(res.data)
+    })
+    .catch(() => {
+      GPTList.value = []
+    })
+    .finally(() => {
+      loading.value = false
+    })
+}
+
 const exhibitChosen = ref<number>()
 const searchFormRef = ref<FormInstance | null>(null)
 const searchData = reactive({
@@ -151,12 +199,28 @@ const handleSearch = () => {
   }
   paginationData.currentPage = 1
 }
+
+const handleGPTSearch = () => {
+  if (paginationData.currentPage === 1) {
+    getGPTQuestionList()
+  }
+  paginationData.currentPage = 1
+}
+
 const resetSearch = () => {
   searchFormRef.value?.resetFields()
   zoneChosen.value = undefined
   exhibitChosen.value = undefined
   if (paginationData.currentPage === 1) {
     getQuestionList()
+  }
+  paginationData.currentPage = 1
+}
+
+const resetGPTSearch = () => {
+  searchFormRef2.value?.resetFields()
+  if (paginationData.currentPage === 1) {
+    getGPTQuestionList()
   }
   paginationData.currentPage = 1
 }
@@ -262,7 +326,11 @@ const handleDetails = (item: any) => {
   } else if (answerTypeNumber.value === 3) {
     answerTypeDetail.value = "图片答案"
   } else {
-    answerTypeDetail.value = "无法回答"
+    if (isGPT.value === true) {
+      answerTypeDetail.value = "文本答案"
+    } else {
+      answerTypeDetail.value = "无法回答"
+    }
   }
 }
 // 在详情页修改回答文本
@@ -379,7 +447,17 @@ const handleClose = () => {
 
 createData()
 
-watch([() => paginationData.currentPage, () => paginationData.pageSize], getQuestionList)
+watch(
+  [() => paginationData.currentPage, () => paginationData.pageSize],
+  () => {
+    if (isGPT.value === true) {
+      getGPTQuestionList()
+    } else {
+      getQuestionList()
+    }
+  },
+  { immediate: true }
+)
 watch(zoneChosen, getExhibitList, { immediate: true })
 </script>
 
@@ -404,6 +482,19 @@ watch(zoneChosen, getExhibitList, { immediate: true })
       </template>
     </el-dialog>
     <el-row class="search-wrapper">
+      <el-dropdown @command="handleCommand">
+        <el-button style="margin-right: 17px" type="info" plain class="el-dropdown-link">
+          选择问答类型
+          <el-icon class="el-icon--right"><arrow-down /></el-icon>
+        </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="a">获取普通问答</el-dropdown-item>
+            <el-dropdown-item command="b">获取GPT问答</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+
       <el-button
         v-if="userStore.roles[0] === 'sys_admin'"
         plain
@@ -415,7 +506,7 @@ watch(zoneChosen, getExhibitList, { immediate: true })
     </el-row>
 
     <!-- 查询索引框 -->
-    <el-card v-loading="loading" class="search-wrapper" shadow="never">
+    <el-card v-if="isGPT === false" v-loading="loading" class="search-wrapper" shadow="never">
       <el-form ref="searchFormRef" :inline="true" :model="searchData" label-position="left">
         <!-- <el-form-item prop="createTime" label="创建时间">
           <el-input v-model="searchData.createTime[0]" placeholder="请输入" />
@@ -449,8 +540,30 @@ watch(zoneChosen, getExhibitList, { immediate: true })
       </el-form>
     </el-card>
 
+    <!-- GPT查询索引 -->
+    <el-card v-else v-loading="loading" class="search-wrapper" shadow="never">
+      <el-form ref="searchFormRef2" :inline="true" :model="searchData2" label-position="left">
+        <!-- <el-form-item prop="createTime" label="创建时间">
+          <el-input v-model="searchData.createTime[0]" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="updateTime" label="更新时间">
+          <el-input v-model="searchData.updateTime[0]" placeholder="请输入" />
+        </el-form-item> -->
+        <el-form-item label="问题文本" prop="questionText">
+          <el-input v-model="searchData2.questionText" placeholder="请输入" style="width: 250px" />
+        </el-form-item>
+        <el-form-item label="回答文本" prop="answerText">
+          <el-input v-model="searchData2.answerText" placeholder="请输入" style="width: 250px" />
+        </el-form-item>
+        <el-form-item style="float: right">
+          <el-button :icon="Search" type="primary" @click="handleGPTSearch">查询</el-button>
+          <el-button :icon="Refresh" @click="resetGPTSearch">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
+
     <!-- 问题陈列 -->
-    <el-row>
+    <el-row v-if="isGPT === false">
       <el-col v-for="(item, index) in questionList" :key="item.id" :offset="index % 3 === 0 ? 2 : 1" :span="6">
         <el-card :body-style="{ padding: '0px' }" shadow="hover" style="margin-bottom: 10px">
           <div class="question-block">
@@ -484,6 +597,41 @@ watch(zoneChosen, getExhibitList, { immediate: true })
         </el-card>
       </el-col> -->
     </el-row>
+
+    <el-row v-if="isGPT === true">
+      <el-col v-for="(item, index) in GPTList" :key="item.id" :offset="index % 3 === 0 ? 2 : 1" :span="6">
+        <el-card :body-style="{ padding: '0px' }" shadow="hover" style="margin-bottom: 10px">
+          <div class="question-block">
+            <span>{{ item.questionText }}</span>
+          </div>
+          <el-divider />
+          <div class="answer-block">
+            <span v-if="item.answerText">{{ item.answerText }}</span>
+            <span v-else><span>暂无回答</span></span>
+          </div>
+          <div style="padding: 14px">
+            <span
+              >所属展品：<el-tag>{{ item.exhibitName ? item.exhibitName : "无" }}</el-tag></span
+            >
+            <span style="margin-left: 15px">
+              <!-- <el-tag v-if="item.answerType === 1" effect="plain" type="success">文本答案</el-tag>
+              <el-tag v-else-if="item.answerType === 2" effect="plain" type="success">地图答案</el-tag>
+              <el-tag v-else-if="item.answerType === 3" effect="plain" type="success">图片答案</el-tag> -->
+              <el-tag effect="plain" type="success">文本答案</el-tag>
+            </span>
+            <div class="bottom">
+              <el-button class="button" @click="handleDetails(item)">查看</el-button>
+              <!-- <el-button class="button" @click="handleUpdateOpen(item)">修改</el-button> -->
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <!-- <el-col :span="6" :offset="questionList.length % 3 === 0 ? 2 : 1">
+        <el-card class="add-icon-container" :body-style="{ padding: '0px' }" shadow="never">
+          <el-button text :icon="Plus" @click="handleOpenAddZone" />
+        </el-card>
+      </el-col> -->
+    </el-row>
     <!-- 分页 组件 -->
     <div class="pager-wrapper">
       <el-pagination
@@ -502,16 +650,18 @@ watch(zoneChosen, getExhibitList, { immediate: true })
     <el-dialog v-model="detailDialogVisible" title="问题详情" @close="detailDialogVisible = false">
       <el-descriptions :column="1" border>
         <el-descriptions-item label="问题: ">{{ questionTextDetail }}</el-descriptions-item>
-        <el-descriptions-item label="所属博物馆-展品: "
+        <el-descriptions-item v-if="isGPT === false" label="所属博物馆-展品: "
           >{{ museumNameDetail + " -- " + exhibitNameDetail }}
         </el-descriptions-item>
+        <el-descriptions-item v-else label="所属博物馆: ">{{ museumNameDetail }} </el-descriptions-item>
         <el-descriptions-item label="答案类型: ">
           <el-tag>{{ answerTypeDetail }}</el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="回答: ">
           <div v-if="isChangable === false">
             {{ answerTextDetail }}
-            <el-button plain type="warning" @click="isChangable = true">修改回答</el-button>
+            <el-button v-if="isGPT === false" plain type="warning" @click="isChangable = true">修改回答</el-button>
+            <span v-else />
           </div>
           <div v-else>
             <el-input v-model="answerTextDetail" placeholder="请输入回答" />

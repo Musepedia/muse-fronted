@@ -14,6 +14,17 @@ interface IGetQuestionListApi {
   answerText?: string
 }
 
+interface IGetGPTQuestionListApi {
+  current: number
+  size: number
+  museumId: number
+  createTime?: string[]
+  updateTime?: string[]
+  order?: string
+  questionText?: string
+  answerText?: string
+}
+
 /** 更新 */
 interface IUpdateQuestionApi {
   id: number
@@ -27,6 +38,14 @@ interface IUpdateQuestionApi {
 export function getQuestionListApi(params: IGetQuestionListApi) {
   return request({
     url: "question/list",
+    method: "get",
+    params
+  })
+}
+
+export function getGPTQuestionListApi(params: IGetGPTQuestionListApi) {
+  return request({
+    url: "question/list-gpt",
     method: "get",
     params
   })

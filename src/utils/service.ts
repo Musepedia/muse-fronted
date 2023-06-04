@@ -5,7 +5,7 @@ import { ElMessage } from "element-plus"
 import { get } from "lodash-es"
 import { getToken } from "./cache/cookies"
 
-let judgArr = function (params: any) {
+const judgArr = function (params: any) {
   let res = false
   if (params instanceof Object) {
     Object.keys(params).forEach((key) => {
