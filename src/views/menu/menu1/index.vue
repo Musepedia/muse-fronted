@@ -537,7 +537,8 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getZone
       <div class="imageCarousel">
         <el-carousel trigger="click">
           <el-carousel-item v-if="imageListDetail.length === 0">
-            <el-empty :image-size="35" description="暂未上传" />
+            <el-image v-if="imageDetail !== ''" :src="imageDetail" class="justify-center" fit="contain" />
+            <el-empty v-else :image-size="35" description="暂未上传" />
           </el-carousel-item>
           <el-carousel-item v-for="item in imageListDetail" v-else :key="item">
             <el-image
